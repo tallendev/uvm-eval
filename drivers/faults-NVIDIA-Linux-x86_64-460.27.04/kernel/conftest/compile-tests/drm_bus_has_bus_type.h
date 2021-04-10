@@ -1,0 +1,1 @@
+#undef NV_DRM_BUS_HAS_BUS_TYPE

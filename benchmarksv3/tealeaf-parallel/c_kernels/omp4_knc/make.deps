@@ -1,0 +1,41 @@
+allocate_buffers.o: omp_kernels/c/allocate_buffers.c \
+ omp_kernels/c/../../shared.h omp_kernels/c/../../chunk.h \
+ omp_kernels/c/../../settings.h omp_kernels/c/../../profiler.h
+cg_solver.o: omp_kernels/c/cg_solver.c omp_kernels/c/../../shared.h \
+ omp_kernels/c/../../chunk.h omp_kernels/c/../../settings.h \
+ omp_kernels/c/../../profiler.h
+cheby_solver.o: omp_kernels/c/cheby_solver.c omp_kernels/c/../../shared.h \
+ omp_kernels/c/../../chunk.h omp_kernels/c/../../settings.h \
+ omp_kernels/c/../../profiler.h
+field_summary.o: omp_kernels/c/field_summary.c \
+ omp_kernels/c/../../shared.h omp_kernels/c/../../chunk.h \
+ omp_kernels/c/../../settings.h omp_kernels/c/../../profiler.h
+jacobi_solver.o: omp_kernels/c/jacobi_solver.c \
+ omp_kernels/c/../../shared.h omp_kernels/c/../../chunk.h \
+ omp_kernels/c/../../settings.h omp_kernels/c/../../profiler.h
+kernel_interface.o: omp_kernels/c/kernel_interface.c \
+ omp_kernels/c/../../kernel_interface.h omp_kernels/c/../../settings.h \
+ omp_kernels/c/../../shared.h omp_kernels/c/../../chunk.h \
+ omp_kernels/c/../../profiler.h omp_kernels/c/c_kernels.h
+local_halos.o: omp_kernels/c/local_halos.c omp_kernels/c/../../shared.h \
+ omp_kernels/c/../../chunk.h omp_kernels/c/../../settings.h \
+ omp_kernels/c/../../profiler.h
+pack_halos.o: omp_kernels/c/pack_halos.c omp_kernels/c/../../shared.h \
+ omp_kernels/c/../../chunk.h omp_kernels/c/../../settings.h \
+ omp_kernels/c/../../profiler.h
+ppcg_solver.o: omp_kernels/c/ppcg_solver.c omp_kernels/c/../../shared.h \
+ omp_kernels/c/../../chunk.h omp_kernels/c/../../settings.h \
+ omp_kernels/c/../../profiler.h
+set_chunk_data.o: omp_kernels/c/set_chunk_data.c \
+ omp_kernels/c/../../shared.h omp_kernels/c/../../chunk.h \
+ omp_kernels/c/../../settings.h omp_kernels/c/../../profiler.h
+set_chunk_state.o: omp_kernels/c/set_chunk_state.c \
+ omp_kernels/c/../../settings.h omp_kernels/c/../../shared.h \
+ omp_kernels/c/../../chunk.h omp_kernels/c/../../profiler.h
+solver_methods.o: omp_kernels/c/solver_methods.c \
+ omp_kernels/c/../../shared.h omp_kernels/c/../../chunk.h \
+ omp_kernels/c/../../settings.h omp_kernels/c/../../profiler.h
+store_energy.o: omp_kernels/c/store_energy.c omp_kernels/c/../../shared.h \
+ omp_kernels/c/../../chunk.h omp_kernels/c/../../settings.h \
+ omp_kernels/c/../../profiler.h
+

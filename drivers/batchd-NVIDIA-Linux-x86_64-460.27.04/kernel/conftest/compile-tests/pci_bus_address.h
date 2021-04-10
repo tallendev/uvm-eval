@@ -1,0 +1,1 @@
+#define NV_PCI_BUS_ADDRESS_PRESENT

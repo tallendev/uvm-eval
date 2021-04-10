@@ -1,0 +1,1 @@
+#define NV_VMF_INSERT_PFN_PRESENT

@@ -1,0 +1,1 @@
+#define NV_CPUMASK_OF_NODE_PRESENT

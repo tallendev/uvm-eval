@@ -1,0 +1,55 @@
+chunk.o: chunk.c chunk.h settings.h shared.h profiler.h
+comms.o: comms.c settings.h shared.h chunk.h profiler.h comms.h
+diffuse.o: diffuse.c drivers/drivers.h drivers/../chunk.h \
+  drivers/../settings.h drivers/../shared.h drivers/../profiler.h \
+  application.h comms.h
+initialise.o: initialise.c chunk.h settings.h shared.h profiler.h \
+  application.h drivers/drivers.h
+main.o: main.c application.h chunk.h settings.h shared.h profiler.h \
+  comms.h
+parse_config.o: parse_config.c application.h chunk.h settings.h shared.h \
+  profiler.h
+profiler.o: profiler.c profiler.h
+settings.o: settings.c settings.h shared.h chunk.h profiler.h
+shared.o: shared.c shared.h chunk.h settings.h profiler.h comms.h
+allocate_buffers_driver.o: drivers/allocate_buffers_driver.c \
+  drivers/../chunk.h drivers/../settings.h drivers/../shared.h \
+  drivers/../profiler.h drivers/../kernel_interface.h
+cg_solver_driver.o: drivers/cg_solver_driver.c drivers/drivers.h \
+  drivers/../chunk.h drivers/../settings.h drivers/../shared.h \
+  drivers/../profiler.h drivers/../kernel_interface.h drivers/../comms.h
+cheby_solver_driver.o: drivers/cheby_solver_driver.c drivers/drivers.h \
+  drivers/../chunk.h drivers/../settings.h drivers/../shared.h \
+  drivers/../profiler.h drivers/../kernel_interface.h drivers/../comms.h
+eigenvalue_driver.o: drivers/eigenvalue_driver.c drivers/drivers.h \
+  drivers/../chunk.h drivers/../settings.h drivers/../shared.h \
+  drivers/../profiler.h drivers/../kernel_interface.h drivers/../comms.h
+field_summary_driver.o: drivers/field_summary_driver.c \
+  drivers/../kernel_interface.h drivers/../settings.h drivers/../shared.h \
+  drivers/../chunk.h drivers/../profiler.h drivers/../comms.h
+halo_update_driver.o: drivers/halo_update_driver.c drivers/../settings.h \
+  drivers/../shared.h drivers/../chunk.h drivers/../profiler.h \
+  drivers/../kernel_interface.h drivers/drivers.h
+jacobi_solver_driver.o: drivers/jacobi_solver_driver.c drivers/drivers.h \
+  drivers/../chunk.h drivers/../settings.h drivers/../shared.h \
+  drivers/../profiler.h drivers/../kernel_interface.h drivers/../comms.h
+ppcg_solver_driver.o: drivers/ppcg_solver_driver.c drivers/drivers.h \
+  drivers/../chunk.h drivers/../settings.h drivers/../shared.h \
+  drivers/../profiler.h drivers/../kernel_interface.h drivers/../comms.h
+remote_halo_driver.o: drivers/remote_halo_driver.c \
+  drivers/../kernel_interface.h drivers/../settings.h drivers/../shared.h \
+  drivers/../chunk.h drivers/../profiler.h drivers/../comms.h \
+  drivers/drivers.h
+set_chunk_data_driver.o: drivers/set_chunk_data_driver.c \
+  drivers/../kernel_interface.h drivers/../settings.h drivers/../shared.h \
+  drivers/../chunk.h drivers/../profiler.h
+set_chunk_state_driver.o: drivers/set_chunk_state_driver.c \
+  drivers/../kernel_interface.h drivers/../settings.h drivers/../shared.h \
+  drivers/../chunk.h drivers/../profiler.h
+solve_finished_driver.o: drivers/solve_finished_driver.c \
+  drivers/../chunk.h drivers/../settings.h drivers/../shared.h \
+  drivers/../profiler.h drivers/../kernel_interface.h drivers/../comms.h \
+  drivers/drivers.h
+store_energy_driver.o: drivers/store_energy_driver.c drivers/../chunk.h \
+  drivers/../settings.h drivers/../shared.h drivers/../profiler.h \
+  drivers/../kernel_interface.h

@@ -1,0 +1,1 @@
+#define NV_VM_FAULT_T_IS_PRESENT

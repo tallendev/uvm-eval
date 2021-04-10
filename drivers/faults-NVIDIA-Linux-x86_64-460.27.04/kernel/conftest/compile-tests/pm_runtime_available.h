@@ -1,0 +1,1 @@
+#define NV_PM_RUNTIME_AVAILABLE

@@ -1,0 +1,4 @@
+#!/usr/bin/stap
+probe kernel.function("unmap_mapping_range") {
+    printf("%s\n", $$parms$$);
+}

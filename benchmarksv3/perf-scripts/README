@@ -1,0 +1,5 @@
+perf: no prefetching
+swpf: inserted prefetching instructions in CUDA
+dpf: driver prefetching
+2pf: dpf + swpf
+noflush: use BATCH policy instead of BATCH_FLUSH default

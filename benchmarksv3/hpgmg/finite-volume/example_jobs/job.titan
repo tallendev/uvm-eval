@@ -1,0 +1,20 @@
+#!/bin/sh
+#PBS -o results.titan
+#PBS -q debug
+#PBS -j oe
+#PBS -l walltime=0:10:00
+#PBS -l nodes=1
+
+source $MODULESHOME/init/bash
+module load cudatoolkit
+export PMI_NO_FORK=1
+
+set -x
+cd $PBS_O_WORKDIR
+export OMP_NUM_THREADS=4
+
+# normal run
+aprun -n 1 -N 1 -d 4 ./build/bin/hpgmg-fv 7 8
+
+# generate nvprof timeline
+#aprun -b -n 1 -N 1 -d 4 nvprof --unified-memory-profiling per-process-device -o timeline.%p.nvp ./build/bin/hpgmg-fv 7 8

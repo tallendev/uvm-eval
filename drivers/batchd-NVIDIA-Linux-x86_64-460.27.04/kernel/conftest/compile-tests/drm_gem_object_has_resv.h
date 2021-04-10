@@ -1,0 +1,1 @@
+#define NV_DRM_GEM_OBJECT_HAS_RESV

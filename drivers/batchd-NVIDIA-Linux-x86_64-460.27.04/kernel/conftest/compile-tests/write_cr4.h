@@ -1,0 +1,1 @@
+#undef NV_WRITE_CR4_PRESENT

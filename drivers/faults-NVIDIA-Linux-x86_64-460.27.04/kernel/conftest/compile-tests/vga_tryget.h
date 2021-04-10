@@ -1,0 +1,1 @@
+#undef NV_VGA_TRYGET_PRESENT

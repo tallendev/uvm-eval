@@ -1,0 +1,42 @@
+
+allocate_buffers.o: c_kernels/omp3/allocate_buffers.c \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../profiler.h
+cg_solver.o: c_kernels/omp3/cg_solver.c c_kernels/omp3/../../shared.h \
+  c_kernels/omp3/../../chunk.h c_kernels/omp3/../../settings.h \
+  c_kernels/omp3/../../profiler.h
+cheby_solver.o: c_kernels/omp3/cheby_solver.c \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../profiler.h
+field_summary.o: c_kernels/omp3/field_summary.c \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../profiler.h
+jacobi_solver.o: c_kernels/omp3/jacobi_solver.c \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../profiler.h
+kernel_interface.o: c_kernels/omp3/kernel_interface.c \
+  c_kernels/omp3/../../kernel_interface.h c_kernels/omp3/../../settings.h \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../profiler.h c_kernels/omp3/c_kernels.h
+local_halos.o: c_kernels/omp3/local_halos.c c_kernels/omp3/../../shared.h \
+  c_kernels/omp3/../../chunk.h c_kernels/omp3/../../settings.h \
+  c_kernels/omp3/../../profiler.h
+pack_halos.o: c_kernels/omp3/pack_halos.c c_kernels/omp3/../../shared.h \
+  c_kernels/omp3/../../chunk.h c_kernels/omp3/../../settings.h \
+  c_kernels/omp3/../../profiler.h
+ppcg_solver.o: c_kernels/omp3/ppcg_solver.c c_kernels/omp3/../../shared.h \
+  c_kernels/omp3/../../chunk.h c_kernels/omp3/../../settings.h \
+  c_kernels/omp3/../../profiler.h
+set_chunk_data.o: c_kernels/omp3/set_chunk_data.c \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../profiler.h
+set_chunk_state.o: c_kernels/omp3/set_chunk_state.c \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../shared.h \
+  c_kernels/omp3/../../chunk.h c_kernels/omp3/../../profiler.h
+solver_methods.o: c_kernels/omp3/solver_methods.c \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../profiler.h
+store_energy.o: c_kernels/omp3/store_energy.c \
+  c_kernels/omp3/../../shared.h c_kernels/omp3/../../chunk.h \
+  c_kernels/omp3/../../settings.h c_kernels/omp3/../../profiler.h
+

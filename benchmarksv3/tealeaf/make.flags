@@ -1,0 +1,63 @@
+# Compiler-specific flags
+CFLAGS_INTEL    = -O3 -no-prec-div -restrict -fno-alias -xhost -std=gnu99
+CFLAGS_GNU      = -O3 -march=native -funroll-loops -std=gnu99
+CFLAGS_CRAY     = -h list=a 
+CFLAGS_PGI      = -fast -Mlist
+CFLAGS_XL       = -O5
+CFLAGS_CLANG    = -O3 -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda \
+									-I/localhd/mattmar/lomp/lomp/source/ #-ffp-contract=fast 
+
+CPPFLAGS_INTEL    = -O3 -no-prec-div -restrict -fno-alias -xhost -std=c++11
+CPPFLAGS_GNU      = -O3 -march=native -funroll-loops -std=c++11
+CPPFLAGS_CRAY     = -h list=a
+CPPFLAGS_PGI      = -fastsse -Mlist
+CPPFLAGS_CLANG    = -O3
+CPPFLAGS_XL       = -O5
+
+FFLAGS_INTEL    = -O3 -no-prec-div -xhost
+FFLAGS_GNU      = -O3 -march=native -funroll-loops
+FFLAGS_CRAY     = -e Z -F -em -ra -h acc_model=fast_addr:no_deep_copy:auto_async_all
+
+OMP_INTEL   = -qopenmp
+OMP_GNU     = -fopenmp
+OMP_CRAY    = 
+OMP_CLANG   = 
+OMP_PGI     = -mp
+OMP_XL      = -qsmp=omp
+OMP         = $(OMP_$(COMPILER))
+
+ifeq ($(DEBUG), yes)
+    CFLAGS_GNU    = -O0 -g -O -Wall -Wextra -fbounds-check -std=gnu99
+    CFLAGS_INTEL  = -O0 -g -debug all -traceback -std=gnu99
+    CFLAGS_CRAY   = -O0 -g -em -eD
+    CFLAGS_PGI    = -O0 -g -C -Mchkstk -Ktrap=fp -Mchkfpstk
+    CFLAGS_CLANG  = -O0 -g
+    CFLAGS_XL     = -O0 -g
+
+    CPPFLAGS_GNU    = -O0 -g -O -Wall -Wextra -fbounds-check -std=c++11
+    CPPFLAGS_INTEL  = -O0 -g -debug all -traceback -std=c++11
+    CPPFLAGS_CRAY   = -O0 -g -em -eD
+    CPPFLAGS_PGI    = -O0 -g -C -Mchkstk -Ktrap=fp -Mchkfpstk
+    CPPFLAGS_CLANG  = -O0 -g
+    CPPFLAGS_XL     = -O0 -g
+
+    FFLAGS_GNU    = -O0 -g -O -Wall -Wextra -fbounds-check
+    FFLAGS_INTEL  = -O0 -g -debug all -check all -traceback -check noarg_temp_created
+    FFLAGS_CRAY   = -O0 -g -em -eD
+    FFLAGS_CLANG  = -O0 -g
+endif
+
+ifeq ($(IEEE), yes)
+    I3E_INTEL     = -fp-model strict -fp-model source -prec-div -prec-sqrt
+    I3E_GNU       = -ffloat-store
+    I3E_CRAY      = -hflex_mp=intolerant
+    I3E_PGI       = -Kieee
+    I3E_CLANG     = 
+    I3E_XL        =
+    I3E           = $(I3E_$(COMPILER))
+endif
+
+CFLAGS   = $(CFLAGS_$(COMPILER)) $(I3E) $(OMP)
+FFLAGS   = $(FFLAGS_$(COMPILER)) $(I3E) $(OMP)
+CPPFLAGS = $(CPPFLAGS_$(COMPILER)) $(I3E) $(OMP)
+

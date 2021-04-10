@@ -1,0 +1,552 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="generator" content=
+"HTML Tidy for Linux/x86 (vers 1 September 2005), see www.w3.org">
+<meta http-equiv="Content-Type" content=
+"text/html; charset=us-ascii">
+<title>Chapter&nbsp;22.&nbsp;PCI-Express Runtime D3 (RTD3) Power
+Management</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.68.1">
+<link rel="start" href="index.html" title=
+"NVIDIA Accelerated Linux Graphics Driver README and Installation Guide">
+<link rel="up" href="installationandconfiguration.html" title=
+"Part&nbsp;I.&nbsp;Installation and Configuration Instructions">
+<link rel="prev" href="powermanagement.html" title=
+"Chapter&nbsp;21.&nbsp;Configuring Power Management Support">
+<link rel="next" href="xcompositeextension.html" title=
+"Chapter&nbsp;23.&nbsp;Using the X Composite Extension">
+</head>
+<body>
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr>
+<th colspan="3" align="center">Chapter&nbsp;22.&nbsp;PCI-Express
+Runtime D3 (RTD3) Power Management</th>
+</tr>
+<tr>
+<td width="20%" align="left"><a accesskey="p" href=
+"powermanagement.html">Prev</a>&nbsp;</td>
+<th width="60%" align="center">Part&nbsp;I.&nbsp;Installation and
+Configuration Instructions</th>
+<td width="20%" align="right">&nbsp;<a accesskey="n" href=
+"xcompositeextension.html">Next</a></td>
+</tr>
+</table>
+<hr></div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title"><a name="dynamicpowermanagement" id=
+"dynamicpowermanagement"></a>Chapter&nbsp;22.&nbsp;PCI-Express
+Runtime D3 (RTD3) Power Management</h2>
+</div>
+</div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#Introduction70e5e">Introduction</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#SupportedConfigaffb4">Supported
+Configurations</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#SystemSettings1be5e">System
+Settings</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#DriverSettingsfe624">Driver
+Settings</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#VidMemThreshold">Video Memory
+Utilization Threshold</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#ProcfsInterface01474">Procfs Interface
+For Runtime D3</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#KnownIssuesAndW6426e">Known Issues And
+Workarounds</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#AutomatedSetup803b0">Automated
+Setup</a></span></dt>
+<dt><span class="section"><a href=
+"dynamicpowermanagement.html#ReportingIssues42249">Reporting
+Issues</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="Introduction70e5e"
+id="Introduction70e5e"></a>Introduction</h2>
+</div>
+</div>
+</div>
+<p>NVIDIA GPUs have many power-saving mechanisms. Some of them will
+reduce clocks and voltages to different parts of the chip, and in
+some cases turn off clocks or power to parts of the chip entirely,
+without affecting functionality or while continuing to function,
+just at a slower speed.</p>
+<p>However, the lowest power states for NVIDIA GPUs require turning
+power off to the entire chip, often through ACPI calls. Obviously,
+this impacts functionality. Nothing can run on the GPU while it is
+powered off. Care has to be taken to only enter this state when
+there are no workloads running on the GPU and any attempts to start
+work or any memory mapped I/O (MMIO) access must be preceded with a
+sequence to first turn the GPU back on and restore any necessary
+state.</p>
+<p>The NVIDIA GPU may have one, two or four PCI functions:</p>
+<p></p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+<p>Function 0: VGA controller / 3D controller</p>
+</li>
+<li>
+<p>Function 1: Audio device</p>
+</li>
+<li>
+<p>Function 2: USB xHCI Host controller</p>
+</li>
+<li>
+<p>Function 3: USB Type-C UCSI controller</p>
+</li>
+</ul>
+</div>
+<p></p>
+<p>Out of the four PCI functions, the NVIDIA driver directly
+manages the VGA controller / 3D Controller PCI function. Other PCI
+functions are managed by the device drivers provided with the Linux
+kernel. The NVIDIA driver is capable of handling entry into and
+exit from these low power states, for the PCI function 0. The
+remaining PCI functions are also powered down along with function 0
+when entering these low power states. As a result, the device
+drivers for the other three functions also need to be taken into
+account to:</p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>prevent entering the lowest-power state when the device is in
+use,&nbsp;</li>
+<li>trigger exiting the lowest-power state when the device is
+needed,&nbsp;</li>
+<li>save and restore any hardware state around power-off
+events.</li>
+</ul>
+</div>
+<p></p>
+<p>The NVIDIA Linux driver includes initial experimental support
+for dynamically managing power to the NVIDIA GPU. It depends on the
+runtime power management framework within the Linux kernel to
+arbitrate power needs of various PCI functions. In order to have
+maximum power saving from this feature, two conditions must be
+met:</p>
+<p>1. Runtime power management for all the PCI functions of the GPU
+should be enabled.</p>
+<p>2. The device drivers for all the PCI functions should support
+runtime power management.</p>
+<p>If these conditions are satisfied and if all the PCI functions
+are idle, then The NVIDIA GPU will go to the lowest power state
+resulting into maximum power savings.</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name=
+"SupportedConfigaffb4" id="SupportedConfigaffb4"></a>Supported
+Configurations</h2>
+</div>
+</div>
+</div>
+<p>This feature is available only when the following conditions are
+satisfied:</p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+<p>This feature is supported only on notebooks.</p>
+</li>
+<li>
+<p>This feature requires system hardware as well as ACPI support
+(ACPI "_PR0" and "_PR3" methods are needed to control PCIe power).
+The necessary hardware and ACPI support was first added in Intel
+Coffeelake chipset series. Hence, this feature is supported from
+Intel Coffeelake chipset series.</p>
+</li>
+<li>
+<p>This feature requires a Turing or newer GPU.</p>
+</li>
+<li>
+<p>This feature is supported with Linux kernel versions 4.18 and
+newer. With older kernel versions, it may not work as intended.</p>
+</li>
+<li>
+<p>This feature is supported when Linux kernel defines CONFIG_PM
+(CONFIG_PM=y). Typically, if the system supports S3
+(suspend-to-RAM), then CONFIG_PM would be defined.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="SystemSettings1be5e"
+id="SystemSettings1be5e"></a>System Settings</h2>
+</div>
+</div>
+</div>
+<div class="orderedlist">
+<ol type="1">
+<li>
+<p>Enable runtime power management for each PCI function.</p>
+<p>Runtime power management can be enabled for each PCI function
+using the following command.</p>
+<p><span><strong class="command">echo auto &gt;
+/sys/bus/pci/devices/&lt;Domain&gt;:&lt;Bus&gt;:&lt;Device&gt;.&lt;Function&gt;/power/control</strong></span></p>
+<p>For example:</p>
+<p><span><strong class="command">echo auto &gt;
+/sys/bus/pci/devices/0000\:01\:00.0/power/control</strong></span></p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="DriverSettingsfe624"
+id="DriverSettingsfe624"></a>Driver Settings</h2>
+</div>
+</div>
+</div>
+<p>This feature is disabled by default by the NVIDIA driver. It can
+be enabled via an option <code class=
+"systemitem">NVreg_DynamicPowerManagement</code>.</p>
+<p></p>
+<div class="variablelist">
+<dl>
+<dt><a name="Default" id="Default"></a><span class=
+"term"><code class="systemitem">Option
+"NVreg_DynamicPowerManagement=0x00"</code></span></dt>
+<dd>
+<p>With this setting, the NVIDIA driver will only use the GPU's
+built-in power management so it always is powered on and
+functional. This is the default option, since this feature is a new
+and highly experimental feature. Actual power usage will vary with
+the GPU's workload.</p>
+</dd>
+<dt><a name="Coarse-grain" id="Coarse-grain"></a><span class=
+"term"><code class="systemitem">Option
+"NVreg_DynamicPowerManagement=0x01"</code></span></dt>
+<dd>
+<p>This setting is called coarse-grained power control. With this
+setting, the NVIDIA GPU driver will allow the GPU to go into its
+lowest power state when no applications are running that use the
+nvidia driver stack. Whenever an application requiring NVIDIA GPU
+access is started, the GPU is put into an active state. When the
+application exits, the GPU is put into a low power state.</p>
+</dd>
+<dt><a name="Fine-grain" id="Fine-grain"></a><span class=
+"term"><code class="systemitem">Option
+"NVreg_DynamicPowerManagement=0x02"</code></span></dt>
+<dd>
+<p>This setting is called fine-grained power control. With this
+setting, the NVIDIA GPU driver will allow the GPU to go into its
+lowest power state when no applications are running that use the
+nvidia driver stack. Whenever an application requiring NVIDIA GPU
+access is started, the GPU is put into an active state. When the
+application exits, the GPU is put into a low power state.</p>
+<p>Additionally, the NVIDIA driver will actively monitor GPU usage
+while applications using the GPU are running. When the applications
+have not used the GPU for a short period, the driver will allow the
+GPU to be powered down. As soon as the application starts using the
+GPU, the GPU is reactivated.</p>
+<p>Furthermore, the NVIDIA GPU driver controls power to the NVIDIA
+GPU and its video memory separately. While turning off the NVIDIA
+GPU, the video memory will be kept in a low power self-refresh mode
+unless the following conditions are met:</p>
+<p></p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+<p>The system is configured in PRIME render offload mode. See
+<a href="primerenderoffload.html" title=
+"Chapter&nbsp;34.&nbsp;PRIME Render Offload">Chapter&nbsp;34,
+<i>PRIME Render Offload</i></a> for details.</p>
+</li>
+<li>
+<p>Less than a certain threshold of video memory is in use. The
+default threshold value is 200 MB. See <a href=
+"dynamicpowermanagement.html#VidMemThreshold" title=
+"Video Memory Utilization Threshold">the section called
+&ldquo;Video Memory Utilization Threshold&rdquo;</a> for
+details.</p>
+</li>
+<li>
+<p>Sufficient system memory is available for saving the video
+memory contents.</p>
+</li>
+</ul>
+</div>
+<p></p>
+<p>If these conditions are met, the NVIDIA GPU driver will
+completely turn off the video memory, in addition to the rest of
+the GPU.</p>
+<p>Keeping video memory in a self-refresh mode uses more power than
+turning off video memory, but allows the GPU to be powered off and
+reactivated more quickly.</p>
+<p>It is important to note that the NVIDIA GPU will remain in an
+active state if it is driving a display. In this case, the NVIDIA
+GPU will go to a low power state only when the X configuration
+option <a href="xconfigoptions.html#HardDPMS">HardDPMS</a> is
+enabled and the display is turned off by some means - either
+automatically due to an OS setting or manually using commands like
+<span><strong class="command">xset</strong></span>.</p>
+<p>Similarly, the NVIDIA GPU will remain in an active state if a
+CUDA application is running.</p>
+</dd>
+</dl>
+</div>
+<p></p>
+<p>Option <code class=
+"computeroutput">NVreg_DynamicPowerManagement</code> can be set on
+the command line while loading the NVIDIA Linux kernel module. For
+example,</p>
+<p><span><strong class="command">modprobe nvidia
+"NVreg_DynamicPowerManagement=0x02"</strong></span></p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="VidMemThreshold" id=
+"VidMemThreshold"></a>Video Memory Utilization Threshold</h2>
+</div>
+</div>
+</div>
+<p>The NVIDIA GPU driver uses 200MB as the default video memory
+utilization threshold to decide whether the video memory can be
+turned off or kept in a self-refresh mode. This threshold value can
+be decreased using an option <code class=
+"systemitem">NVreg_DynamicPowerManagementVideoMemoryThreshold</code>.
+This option can be set on the command line while loading the NVIDIA
+Linux kernel module. For example,</p>
+<p><span><strong class="command">modprobe nvidia
+"NVreg_DynamicPowerManagementVideoMemoryThreshold=100"</strong></span></p>
+<p>The video memory utilization threshold value should be a
+positive integer. It is expressed in Megabytes (1048576 bytes). In
+the example above, the threshold value will be set to 100 MB. The
+maximum threshold value can be 200 MB. Any value greater than 200
+MB will be ignored by the NVIDIA GPU driver and it will use the
+default threshold of 200 MB.</p>
+<p>This threshold can be set to 0 in order to prevent the video
+memory from being turned off.</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name=
+"ProcfsInterface01474" id="ProcfsInterface01474"></a>Procfs
+Interface For Runtime D3</h2>
+</div>
+</div>
+</div>
+<p>The following entries in the file <code class=
+"filename">/proc/driver/nvidia/gpus/domain:bus:device.function/power</code>
+provide more details regarding the runtime D3 feature.</p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+<p>"Runtime D3 status" entry gives the current status of this
+feature.</p>
+</li>
+<li>
+<p>"Video Memory" entry gives the power status of the video
+memory.</p>
+</li>
+<li>
+<p>"Video Memory Self Refresh" entry reports whether the NVIDIA GPU
+hardware supports video memory self refresh mode.</p>
+</li>
+<li>
+<p>"Video Memory Off" entry reports whether the NVIDIA GPU hardware
+supports video memory off mode.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name=
+"KnownIssuesAndW6426e" id="KnownIssuesAndW6426e"></a>Known Issues
+And Workarounds</h2>
+</div>
+</div>
+</div>
+<p>The first two workarounds in the below section are not required
+on Linux kernel 5.5 or newer.</p>
+<div class="orderedlist">
+<ol type="1">
+<li>
+<p>The USB xHCI Host controller and USB Type-C UCSI controller
+drivers present in most Linux distributions do not fully support
+runtime power management. Full support for runtime power management
+in these drivers is available in kernel version 5.5. For kernel
+versions before 5.5, these two PCI functions have to be disabled
+for this feature to work properly. This can be done using the
+following command.</p>
+<p><span><strong class="command">echo 1 &gt;
+/sys/bus/pci/devices/&lt;Domain&gt;:&lt;Bus&gt;:&lt;Device&gt;.2/remove</strong></span></p>
+<p><span><strong class="command">echo 1 &gt;
+/sys/bus/pci/devices/&lt;Domain&gt;:&lt;Bus&gt;:&lt;Device&gt;.3/remove</strong></span></p>
+<p>For example:</p>
+<p><span><strong class="command">echo 1 &gt;
+/sys/bus/pci/devices/0000\:01\:00.2/remove</strong></span></p>
+<p><span><strong class="command">echo 1 &gt;
+/sys/bus/pci/devices/0000\:01\:00.3/remove</strong></span></p>
+</li>
+<li>
+<p>There is a known issue with the audio driver due to which the
+audio PCI function remains in an active state. This affects Linux
+kernel versions 4.19 (starting with git commit id <code class=
+"computeroutput">37a3a98ef601f89100e3bb657fb0e190b857028c</code> )
+through 5.4, and is fixed in Linux kernel version 5.5.</p>
+<p><span><strong class="command">echo 1 &gt;
+/sys/bus/pci/devices/&lt;Domain&gt;:&lt;Bus&gt;:&lt;Device&gt;.1/remove</strong></span></p>
+<p>For example:</p>
+<p><span><strong class="command">echo 1 &gt;
+/sys/bus/pci/devices/0000\:01\:00.1/remove</strong></span></p>
+<p>This workaround will result in audio loss when the audio
+function is being used to play audio over DP/HDMI connection. To
+recover from audio loss, rescanning the PCI tree will bring back
+the audio PCI function and audio operation can be recovered.
+However, after rescanning the PCI tree, all the disabled PCI
+functions will again become active. To ensure that this feature
+works again, the workarounds mentioned in this section have to be
+done again.</p>
+</li>
+<li>
+<p>When the NVIDIA GPU is driving a console, runtime power
+management is enabled for the VGA Controller PCI function and
+nvidia driver is uninstalled, the console will become blank. The
+workaround for this issue is to disable runtime power management
+for PCI function 0 before uninstalling the NVIDIA driver using the
+following command:</p>
+<p><span><strong class="command">echo on &gt;
+/sys/bus/pci/devices/&lt;Domain&gt;:&lt;Bus&gt;:&lt;Device&gt;.&lt;Function&gt;/power/control</strong></span></p>
+<p>For example:</p>
+<p><span><strong class="command">echo on &gt;
+/sys/bus/pci/devices/0000\:01\:00.0/power/control</strong></span></p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="AutomatedSetup803b0"
+id="AutomatedSetup803b0"></a>Automated Setup</h2>
+</div>
+</div>
+</div>
+<p>This section describes automated ways to perform the manual
+steps mentioned above so that this feature works seamlessly after
+boot.</p>
+<div class="orderedlist">
+<ol type="1">
+<li>
+<p>Create a file named <code class=
+"filename">80-nvidia-pm.rules</code> in <code class=
+"filename">/lib/udev/rules.d/</code> directory.</p>
+<p>Add the content given below to <code class=
+"filename">80-nvidia-pm.rules</code> file. This would enable
+runtime power management for the VGA Controller / 3D Controller PCI
+function. It would also remove Audio device PCI function, USB xHCI
+Host Controller function as well as USB Type-C UCSI Controller PCI
+function. Note that the first three rules given below are not
+required from Linux kernel 5.5 and newer.</p>
+<pre class="screen">
+# Remove NVIDIA USB xHCI Host Controller devices, if present
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c0330", ATTR{remove}="1"
+
+# Remove NVIDIA USB Type-C UCSI devices, if present
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c8000", ATTR{remove}="1"
+
+# Remove NVIDIA Audio devices, if present
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", ATTR{remove}="1"
+
+# Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
+ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
+ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
+
+# Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
+ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
+ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
+</pre></li>
+<li>
+<p>The driver option <code class=
+"systemitem">NVreg_DynamicPowerManagement</code> can be set via the
+distribution's kernel module configuration files (such as those
+under <code class="filename">/etc/modprobe.d</code>). For example,
+the following line can be added to <code class=
+"filename">/etc/modprobe.d/nvidia.conf</code> file to seamlessly
+enable this feature.</p>
+<p><code class="systemitem">options nvidia
+"NVreg_DynamicPowerManagement=0x02"</code></p>
+</li>
+<li>
+<p>Reboot the system.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name=
+"ReportingIssues42249" id="ReportingIssues42249"></a>Reporting
+Issues</h2>
+</div>
+</div>
+</div>
+<p>For better error reporting, nvidia-bug-report.sh collects a dump
+of ACPI tables using <span><strong class=
+"command">acpidump</strong></span> utility. Depending on your Linux
+distribution, this utility may be found in a package called
+<span><strong class="command">acpica-tools</strong></span> or
+<span><strong class="command">acpica</strong></span> or
+similar.</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left"><a accesskey="p" href=
+"powermanagement.html">Prev</a>&nbsp;</td>
+<td width="20%" align="center"><a accesskey="u" href=
+"installationandconfiguration.html">Up</a></td>
+<td width="40%" align="right">&nbsp;<a accesskey="n" href=
+"xcompositeextension.html">Next</a></td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">
+Chapter&nbsp;21.&nbsp;Configuring Power Management
+Support&nbsp;</td>
+<td width="20%" align="center"><a accesskey="h" href=
+"index.html">Home</a></td>
+<td width="40%" align="right" valign="top">
+&nbsp;Chapter&nbsp;23.&nbsp;Using the X Composite Extension</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,1 @@
+#define NV_IS_EXPORT_SYMBOL_GPL_sme_active 0

@@ -1,0 +1,1 @@
+#define NV_TIMER_SETUP_PRESENT
