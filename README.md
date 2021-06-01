@@ -13,6 +13,12 @@
 ## Swapping the driver
 To enable logging information, the driver with added logging features must be installed. Additionally, it may
 need certain parameters to function correctly. This requires root permission in most cases.\
+
+### Experimental System Specs
+Relevant hardware details: Titan V GPU, MD Epyc 7551P 32-Core CPU, 128GB DDR4\
+Operating systems and versions: Fedora 33 running 5.9.16-200.fc33.x86\_64, CUDA 11.2, and NVIDIA Driver version 460.27.04\
+Compilers and versions: GCC 10.2.1 and NVCC cuda\_11.2.r11.2/compiler.29373293\_0\
+Libraries and versions: CUBLAS 11.2\
 Note: The provided UVM drivers require the compatible NVIDIA Driver on the system: 460.74.27.04
 
 ### Build
