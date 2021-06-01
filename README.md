@@ -12,7 +12,8 @@
 
 ## Swapping the driver
 To enable logging information, the driver with added logging features must be installed. Additionally, it may
-need certain parameters to function correctly. This requires root permission in most cases.
+need certain parameters to function correctly. This requires root permission in most cases.\
+Note: The provided UVM drivers require the compatible NVIDIA Driver on the system: 460.74.27.04
 
 ### Build
 cd drivers/*-NVIDIA-Linux-x86_64-460.74.27.04/kernel/\
