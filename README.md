@@ -15,8 +15,10 @@
 To enable logging information, the driver with added logging features must be installed. Additionally, it may
 need certain parameters to function correctly. This requires root permission in most cases.\
 There are two drivers provided. One collects produces "batch" experiment data from the paper, and the other produces
-"fault" experiment data from the paper (access patterns). They are in: \
-../drivers/batchd-NVIDIA-Linux-x86\_64-460.74.27.04/kernel/ \
+"fault" experiment data from the paper (access patterns). They are in:
+
+../drivers/batchd-NVIDIA-Linux-x86\_64-460.74.27.04/kernel/
+
 and
 
 ../drivers/faults-NVIDIA-Linux-x86\_64-460.74.27.04/kernel/  \
