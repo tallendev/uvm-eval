@@ -75,21 +75,21 @@ data sets: programmatically generated - 1048576, 8388608
 
 ### hpgmg
 benchmarks/hpgmg\
-description: NVIDIA UVM hpgmg - https://bitbucket.org/nsakharnykh/hpgmg-cuda/src/master/\
+description: NVIDIA UVM hpgmg - https://bitbucket.org/nsakharnykh/hpgmg-cuda/src/master/ \
 build: ./build.sh (complex options for ./configure, make)\
 run: ./build/bin/hpgmg-fv [log2_box_dim]  [target_boxes_per_rank]\
 data sets: programmatically generated - "7 7", "8 8"
 
 ### cufft
 benchmarks/cufft\
-description: cufft example - https://github.com/NVIDIA/cuda-samples/tree/master/Samples/simpleCUFFT\
+description: cufft example - https://github.com/NVIDIA/cuda-samples/tree/master/Samples/simpleCUFFT \
 build: make\
 run: ./simpleCUFFT\
 data sets: programmatically generated - 80000000
 
 ### tealeaf
 benchmarks/tealeaf\
-description: tealeaf - https://github.com/UoB-HPC/TeaLeaf/tree/master/2d\
+description: tealeaf - https://github.com/UoB-HPC/TeaLeaf/tree/master/2d \
 build: make\
 run: ./tealeaf\
 data sets: "tea.in" is default input file - "smaller-tea.in", "smaller-tea.in", "large-tea.in" used for experiments by overwriting tea.in
