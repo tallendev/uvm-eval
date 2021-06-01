@@ -10,13 +10,13 @@ log_{prefetchingf_}?{problem_size}_bsize_{batch_size}\
 Where pf_ only appears if prefetching is enabled during the execution. The directories will contain one file per iteration inside the script (1 by default):\
 cublas_{i} - output from the system log with only syslogger data\
 cublas_{i}.txt - loose CSV formatting of syslogger data\
-dmesg_1 - raw dmesg of most-recent execution for debugging\
+dmesg_1 - raw dmesg of most-recent execution for debugging
 
 ### Data Format
 Each line is a batch:\
 b,363795213599097,736221,32,9,29,3,3,1,0,0,0,3,12288,3,1,1,15790,35196,0,534863,493736,18104,315251,34254,290,124063,112010,1,1,1\
 with the format:\
-batch_id, start_time, time, cached_faults, coalesced_faults, duplicate_faults, actual_faults, not_already_resident, num_vablock, num_prefetch, num_evict, num_evict_ops, num_transfers, transfer_size,num_mapped_pages, num_mapping_ops, root_chunk_allocs, batch_transfer_time, map_time, unmap_time, service_time, make_resident_time, resident_pages_time, pop_pages_time, unmap_res_time, unmap_rdup_time, rmask_get_alloc, block_gpu_state_time, num_new_vablock, unmap_res_count, num_replays, status=0\
+batch_id, start_time, time, cached_faults, coalesced_faults, duplicate_faults, actual_faults, not_already_resident, num_vablock, num_prefetch, num_evict, num_evict_ops, num_transfers, transfer_size,num_mapped_pages, num_mapping_ops, root_chunk_allocs, batch_transfer_time, map_time, unmap_time, service_time, make_resident_time, resident_pages_time, pop_pages_time, unmap_res_time, unmap_rdup_time, rmask_get_alloc, block_gpu_state_time, num_new_vablock, unmap_res_count, num_replays, status=0
 
 
 batch_id: id from 0-max_batch-1\

@@ -1,6 +1,6 @@
 # About These Scripts
 Refer to ../batchd-scripts readme; everything but data format is the same\
-We only include this data for "abc" application in SC paper; however, we are releasing all of this for our prior work as well\
+We only include this data for "abc" application in SC paper; however, we are releasing all of this for our prior work as well
 
 ### Data Format
 Each line is a fault:\
