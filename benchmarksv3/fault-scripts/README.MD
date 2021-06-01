@@ -11,7 +11,7 @@ fault_address,timestamp,fault_type,access_type,access_type_mask,num_instances,cl
 fault_address:\
 timestamp: time of fault written by mmu in buffer\
 fault_type: fault type matching UVM driver, 0-16, pde/pte/atom/write/read/fatal/va_limit/unbound_inst/priv/pitch/work/aperture/compress/kind/region/poisoned/count\
-access_type: UVM_FAULT_ACCESS_TYPE_PREFETCH = 0, UVM_FAULT_ACCESS_TYPE_READ, UVM_FAULT_ACCESS_TYPE_WRITE, UVM_FAULT_ACCESS_TYPE_ATOMIC_WEAK, UVM_FAULT_ACCESS_TYPE_ATOMIC_STRONG,UVM_FAULT_ACCESS_TYPE_COUNT\ 
+access_type: UVM_FAULT_ACCESS_TYPE_PREFETCH = 0, UVM_FAULT_ACCESS_TYPE_READ, UVM_FAULT_ACCESS_TYPE_WRITE, UVM_FAULT_ACCESS_TYPE_ATOMIC_WEAK, UVM_FAULT_ACCESS_TYPE_ATOMIC_STRONG,UVM_FAULT_ACCESS_TYPE_COUNT 
 access_type_mask: Mask of access_type vals\
 num_instances: repeat faults\
 client_type: g/h/c, refer to open gpu doc and/or driver doc; it's what entity created the fault\
