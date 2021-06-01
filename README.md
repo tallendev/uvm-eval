@@ -27,7 +27,7 @@ sudo modprobe nvidia-uvm uvm_perf_prefetch_enable={1,0}\
 sudo modprobe nvidia-uvm uvm_perf_fault_batch_count=${batch_size}
 
 ## Tools
-Several tools are used to assist with data collection, as all data is logged to the system logger. DMESG is too slow in the event of page fault collection\
+Several tools are used to assist with data collection, as all data is logged to the system logger. dmesg is too slow in the event of page fault collection
 
 ### Syslogger
 Move data from system log to file while application is running:\
