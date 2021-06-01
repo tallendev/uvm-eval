@@ -15,14 +15,15 @@
 To enable logging information, the driver with added logging features must be installed. Additionally, it may
 need certain parameters to function correctly. This requires root permission in most cases.\
 There are two drivers provided. One collects produces "batch" experiment data from the paper, and the other produces
-"fault" experiment data from the paper (access patterns). They are in:
+"fault" experiment data from the paper (access patterns). These drivers are at:
 
 ../drivers/batchd-NVIDIA-Linux-x86\_64-460.74.27.04/kernel/
 
 and
 
-../drivers/faults-NVIDIA-Linux-x86\_64-460.74.27.04/kernel/  \
-respectively
+../drivers/faults-NVIDIA-Linux-x86\_64-460.74.27.04/kernel/
+
+respectively.
 
 ### Build
 cd drivers/*-NVIDIA-Linux-x86_64-460.74.27.04/kernel/\
@@ -32,8 +33,9 @@ sudo make modules_install
 ### Load
 sudo rmmod nvidia_uvm\
 sudo modprobe nvidia_uvm\
-Note: turn on/off prefetching with 1/0 and/or maximum batch size\
+Note: turn on/off prefetching with 1/0 and/or maximum batch size using arguments as below:\
 sudo modprobe nvidia-uvm uvm_perf_prefetch_enable={1,0}\
+or\
 sudo modprobe nvidia-uvm uvm_perf_fault_batch_count=${batch_size}
 
 ## Tools
