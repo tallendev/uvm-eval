@@ -8,12 +8,14 @@
 
 ITERS=1
 
-module load cuda
 
 sudo modprobe nvidia-uvm #uvm_perf_prefetch_enable=0 #uvm_perf_fault_coalesce=0 #uvm_perf_fault_batch_count=1
 sudo rmmod -f nvidia-uvm
 sudo modprobe nvidia-uvm uvm_perf_prefetch_enable=0 #uvm_perf_fault_coalesce=0 #uvm_perf_fault_batch_count=1
 
+cd ../../tools/syslogger/
+make
+cd -
 
 bsizes=(32 64 128 256 512 1024 2048 4096 6144)
 
@@ -35,7 +37,7 @@ find . -maxdepth 1  -name 'log2_*' -type d -exec rm -rf {} +
 
 cd /home/tnallen/cuda11.2/faults-cache-NVIDIA-Linux-x86_64-460.27.04/kernel
     
-make
+make -j
 sudo make modules_install
 cd -
 # prefetching on or off
@@ -76,7 +78,7 @@ for ((pf=0; pf < 2; pf++)); do
                 logfile=/scratch1/$file
                 pwd
 
-                /home/tnallen/dev/uvm-learn/data/scripts/log "$logfile" &
+                ../../tools/syslogger/log "$logfile" &
                 pid=$!
                 sleep 8
 

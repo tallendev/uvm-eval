@@ -16,6 +16,9 @@ sudo modprobe nvidia-uvm uvm_perf_prefetch_enable=0 #uvm_perf_fault_coalesce=0 #
 
 export OMP_NUM_THREADS=1
 
+cd ../../tools/syslogger/
+make
+cd -
 
 #bsizes=(256 2048)
 #bsizes=(256)
@@ -42,9 +45,9 @@ rm -rf build
 rm -f quant*.csv
 find . -maxdepth 1  -name 'log_*' -type d -exec rm -rf {} +
 
-cd /home/tnallen/cuda11.2/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel
+cd ../../drivers/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel
     
-make
+make -j
 sudo make modules_install
 cd -
 # prefetching on or off
@@ -81,7 +84,7 @@ for ((pf=0; pf < 2; pf++)); do
                 logfile=/scratch1/$file
                 pwd
 
-                /home/tnallen/dev/uvm-learn/data/scripts/log "$logfile" &
+                ../../tools/syslogger/log "$logfile" &
                 pid=$!
                 sleep 8
 

@@ -1,4 +1,4 @@
-/home/tnallen/cuda11.2/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia.ko
-/home/tnallen/cuda11.2/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia-uvm.ko
-/home/tnallen/cuda11.2/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia-modeset.ko
-/home/tnallen/cuda11.2/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia-drm.ko
+/home/tnallen/dev/uvm-eval/drivers/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia.ko
+/home/tnallen/dev/uvm-eval/drivers/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia-uvm.ko
+/home/tnallen/dev/uvm-eval/drivers/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia-modeset.ko
+/home/tnallen/dev/uvm-eval/drivers/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel/nvidia-drm.ko
