@@ -1,18 +1,18 @@
 # Navigation
 ## benchmarksv3
-    - Contains all benchmarks in paper and some additional examples\
-    - "bsize-scripts" contains scripts for generating batch-oriented data.\
-    - "fault-scripts" contains scripts for generating fault-based data.\
+    - Contains all benchmarks in paper and some additional examples
+    - "bsize-scripts" contains scripts for generating batch-oriented data.
+    - "fault-scripts" contains scripts for generating fault-based data.
 ## drivers
-    - `batchd` includes batch-based modifications\
-    - `faults` includes fault-based data\
+    - `batchd` includes batch-based modifications
+    - `faults` includes fault-based data
 ## tools
-    - `syslogger` contains the tool for parsing data out of the system log\
-    - `plotv2` contains .sh scripts that operate the .py scripts for reproducing plots and analysis from the paper if data is available\
+    - `syslogger` contains the tool for parsing data out of the system log
+    - `plotv2` contains .sh scripts that operate the .py scripts for reproducing plots and analysis from the paper if data is available
 
 ## Swapping the driver
-To enable logging information, the driver with added logging features must be installed. Additionally, it may\
-need certain parameters to function correctly. This requires root permission in most cases.\
+To enable logging information, the driver with added logging features must be installed. Additionally, it may
+need certain parameters to function correctly. This requires root permission in most cases.
 
 ### Build
 cd drivers/*-NVIDIA-Linux-x86_64-460.74.27.04/kernel/\
