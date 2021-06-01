@@ -10,6 +10,11 @@
     - `syslogger` contains the tool for parsing data out of the system log
     - `plotv2` contains .sh scripts that operate the .py scripts for reproducing plots and analysis from the paper if data is available
 
+# Overview
+Data in the paper is collected through driver modifications. There are two types of data presented: batch, and fault (access pattern).
+We provided two drivers to collect these data separately due to the overhead of fault data collection. The 
+instructions for swapping the driver out, building and running applications, system specifications, and
+other information are below.
 
 ## Swapping the driver
 To enable logging information, the driver with added logging features must be installed. Additionally, it may
@@ -25,6 +30,10 @@ and
 
 respectively.
 
+Notes: The following assumes that the appropriate NVIDIA driver is already installed. These steps will replace the 
+existing UVM driver for convenience over reboot and multiple experiments. The base UVM driver will need to 
+be reinstalled to revert to the original system status. Full system specifications are at the end of this file.
+
 ### Build
 cd drivers/*-NVIDIA-Linux-x86_64-460.74.27.04/kernel/\
 make modules\
@@ -35,23 +44,7 @@ sudo rmmod nvidia_uvm\
 sudo modprobe nvidia_uvm\
 Note: turn on/off prefetching with 1/0 and/or maximum batch size using arguments as below:\
 sudo modprobe nvidia-uvm uvm_perf_prefetch_enable={1,0}\
-or\
 sudo modprobe nvidia-uvm uvm_perf_fault_batch_count=${batch_size}
-
-## Tools
-Several tools are used to assist with data collection, as all data is logged to the system logger. dmesg is too slow in the event of page fault collection
-
-### Syslogger
-Move data from system log to file while application is running:\
-tools/syslogger/log "$logfile"&\
-pid=$!\
-<path>/app\
-kill $pid
-
-
-### log2csv
-Process syslogger output into CSV:\
-tools/sys2csv/log2csv.sh $logfile
 
 ## Applications
 The scripts will reproduce the experiments as they were performed for use in the paper, including data not used or omitted for space.\
@@ -112,6 +105,20 @@ description: one block matrix add experiment\
 build: make DEFS="-DTSIZE=$psize -DBSIZE=$psize"\
 run: ./abc\
 data sets: programatically generated - 32, 64, 128, 256
+
+## Tools
+Several tools are used to assist with data collection, as all data is logged to the system logger. dmesg is too slow in the event of page fault collection
+
+### Syslogger
+Move data from system log to file while application is running:\
+tools/syslogger/log "$logfile"&\
+pid=$!\
+<path>/app\
+kill $pid
+
+### log2csv
+Process syslogger output into CSV:\
+tools/sys2csv/log2csv.sh $logfile
 
 ## Data and Formatting
 Check benchmarks/bsize-scripts and benchmarks/faults-scripts (batchd- driver and faults- driver respectively) 
