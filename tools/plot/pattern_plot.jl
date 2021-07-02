@@ -52,7 +52,13 @@ function parse_input(inf::String, t)
             # count each line type; skip B/S markers 
             if kind != 's' && kind != 'b'
                 tokens = split(SubString(odata, begc, endc-1), ",")
-                @inbounds faults[index] = Fault(odata[begc],  parse(Int64, tokens[2], base=16) >> 12, parse(Int64, tokens[3]))
+                #println(tokens)
+                #@inbounds 
+                if length(tokens) < 3
+                    println(tokens)
+                    println(stderr, "index:", index)
+                end
+                faults[index] = Fault(odata[begc],  parse(Int64, tokens[2], base=16) >> 12, parse(Int64, tokens[3]))
                 #@inbounds faults[index] = Fault(odata[begc],  parse(Int64, SubString(odata, begc+2, endc-1), base=16) >> 12)
                 @inbounds fault::Fault = faults[index]
                 begc = endc + 1
