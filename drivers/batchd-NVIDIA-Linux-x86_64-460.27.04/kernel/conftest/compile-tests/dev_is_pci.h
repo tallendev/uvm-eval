@@ -1,1 +1,0 @@
-#define NV_DEV_IS_PCI_PRESENT

@@ -1,1 +1,0 @@
-#define NV_MM_HAS_MMAP_LOCK

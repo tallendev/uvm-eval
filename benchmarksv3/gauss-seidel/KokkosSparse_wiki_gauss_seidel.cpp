@@ -7,6 +7,60 @@
 #include "KokkosSparse_gauss_seidel.hpp"
 #include "KokkosBlas1_nrm2.hpp"
 
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <nvrtc.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+
+
+// Optional definitions
+// CUDA_TALK: makes macros output error messages as provided by source (default = omitted for performance)
+
+// Abort when error occurs (for CHECK_X() macros)
+#ifdef ABORT_ON_CUDA_ERROR
+#define SAFECUDA_ASSERT_ALWAYS_EXITS true
+#else
+#define SAFECUDA_ASSERT_ALWAYS_EXITS false
+#endif
+
+// Combination of techniques from:
+// variable_args: https://stackoverflow.com/a/26408195
+// zero_fix: https://gustedt.wordpress.com/2010/06/08/detect-empty-macro-arguments
+
+// _last_one+2 will be too many arguments for the macros to handle
+#define _ARG_N(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9,\
+               _10, _11, _12, _13, _14, _15, _16, _17, _18, _19,\
+               N, ...) N
+// Universal functions (count, parens, pasting)
+#define __COUNT_COMMA(...) _ARG_N(__VA_ARGS__)
+#define _TRIGGER_PARENTHESIS_(...) ,
+#define PASTE2(_0, _1) _PASTE2(_0, _1)
+#define _PASTE2(_0, _1) _0 ## _1
+#define PASTE5(_0, _1, _2, _3, _4) _PASTE5(_0, _1, _2, _3, _4)
+#define _PASTE5(_0, _1, _2, _3, _4) _0 ## _1 ## _2 ## _3 ## _4
+// Special comma cases for zeros
+#define _COMMA_CASE_0001 0
+#define _COMMA_CASE_0010 0
+#define _COMMA_CASE_0100 0
+#define _COMMA_CASE_1000 0
+// Nonzero cases are a series of values-1 repeated #non-variadic-arguments times
+#define _COMMA_CASE_0000 1
+#define _COMMA_CASE_1111 2
+#define _COMMA_CASE_2222 3
+#define _COMMA_CASE_3333 4
+// EACH __RESQ_N# MUST count backwards from maximum (same number of entries as _ARG_N)
+  // All entries greater than max non-variadic arguments should be truncated
+  // to the max non-variadic arugment value to simplify case-handling for variadic cases
+// Max non-variadic arguments: 3
+#define __RESQ_N3 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,\
+                 3, 3, 3, 3, 3, 3, 3, 2, 1, 0
+#define _COUNT_COMMA_N3(...) __COUNT_COMMA(__VA_ARGS__, __RESQ_N3)
+#define VFUNC_NV3(func, ...) PASTE2(func, _VFUNC_NV3(__VA_ARGS__))(__VA_ARGS__)
+#define _VFUNC_NV3(...) \
+
 //Parallel Gauss-Seidel Preconditioner/Smoother
 //  -Uses graph coloring to find independent row sets,
 //   and applies GS to each set in parallel
@@ -45,6 +99,15 @@ int main(int argc, char* argv[])
     //Generate a square, strictly diagonally dominant, but nonsymmetric matrix on which Gauss-Seidel should converge.
     //Get approx. 20 entries per row
     //Diagonals are 2x the absolute sum of all other entries.
+    //Iterate until reaching the tolerance
+    cudaEvent_t start;
+    cudaEventCreate(&start);
+
+    cudaEvent_t stop;
+    cudaEventCreate(&stop);
+
+    // Record the start event
+    cudaEventRecord(start, NULL);
     Offset nnz = numRows * 20;
     Matrix A = KokkosKernels::Impl::kk_generate_diagonally_dominant_sparse_matrix<Matrix>(numRows, numRows, nnz, 2, 100, 1.05 * one);
     std::cout << "Generated a matrix with " << numRows << " rows/cols, and " << nnz << " entries.\n";
@@ -68,7 +131,8 @@ int main(int argc, char* argv[])
     Mag initialRes = KokkosBlas::nrm2(b);
     Mag scaledResNorm = magOne;
     bool firstIter = true;
-    //Iterate until reaching the tolerance
+    
+    
     int numIters = 0;
     while(scaledResNorm > tolerance)
     {
@@ -90,6 +154,18 @@ int main(int argc, char* argv[])
       numIters++;
       std::cout << "Iteration " << numIters << " scaled residual norm: " << scaledResNorm << '\n';
     }
+    // Record the stop event
+    cudaEventRecord(stop, NULL);
+
+    // Wait for the stop event to complete
+    cudaEventSynchronize(stop);
+    
+    //time.stop();
+    //std::cout << "time:" << time.elapsedSeconds() << std::endl;
+
+    float msecTotal = 0.0f;
+    cudaEventElapsedTime(&msecTotal, start, stop);
+    printf("perf,%f\n", msecTotal);
     std::cout << "SUCCESS: converged in " << numIters << " iterations.\n";
   }
   Kokkos::finalize();

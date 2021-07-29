@@ -1,1 +1,0 @@
-#define NV_BITMAP_CLEAR_PRESENT

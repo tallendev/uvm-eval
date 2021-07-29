@@ -1,1 +1,0 @@
-#define NV_DEVICE_OF_NODE_PRESENT

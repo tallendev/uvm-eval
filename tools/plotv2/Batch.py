@@ -226,7 +226,7 @@ def main():
     args = parser.parse_args()
     c = args.csv
     e = Experiment(c)
-    print(e.get_transfers())
+    print("time:", sum(e.get_batch_times()))
     #print((e.get_unmap_res_times()))
     #e.print_info()
     #e.print_short_batches()

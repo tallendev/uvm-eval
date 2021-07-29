@@ -21,8 +21,8 @@ make
 cd -
 
 #bsizes=(256 2048)
-#bsizes=(256)
-bsizes=(32 64 128 256 512 1024 2048 4096 6144)
+bsizes=(256)
+#bsizes=(32 64 128 256 512 1024 2048 4096 6144)
 
 oldifs=$IFS
 export IFS=""
@@ -33,7 +33,8 @@ if [ $# -gt 0 ]; then
         psizes+=(${!i})
     done
 else
-    psizes=("7 7" "8 8") # "9 9")
+    psizes=("8 8") # "9 9")
+    #psizes=("7 7" "8 8") # "9 9")
     #psizes=("6 7" "7 7" "7 8" "8 8") # "9 9")
 fi
 
@@ -90,7 +91,7 @@ for ((pf=0; pf < 2; pf++)); do
 
                 echo "pid: $pid"
                 export IFS=$oldifs
-                time ./build/bin/hpgmg-fv ${psizes[$i]} | grep "alloced,\|perf,"  >> $out
+                nvprof -u s ./build/bin/hpgmg-fv ${psizes[$i]}  &>> $out
                 export IFS=""
 
                 len=`cat "$logfile" | wc -l`

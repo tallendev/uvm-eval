@@ -420,7 +420,8 @@ int main(int argc, char **argv){
   richardson_error(&MG_h,0,VECTOR_U);
 
   printf("alloced,%lu\n", UM_MAX_MEM);
-  printf("perf,%lf\n", totdofs/totseconds);
+  printf("perf,%lf\n", totseconds);
+  //printf("perf,%lf\n", totdofs/totseconds);
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   if(my_rank==0){fprintf(stdout,"\n\n===== Deallocating memory ======================================================\n");}
   MGDestroy(&MG_h);

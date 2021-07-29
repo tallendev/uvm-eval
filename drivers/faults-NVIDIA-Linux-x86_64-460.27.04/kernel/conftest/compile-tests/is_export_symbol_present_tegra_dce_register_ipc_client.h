@@ -1,1 +1,0 @@
-#define NV_IS_EXPORT_SYMBOL_PRESENT_tegra_dce_register_ipc_client 0

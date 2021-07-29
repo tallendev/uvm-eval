@@ -1,1 +1,0 @@
-#define NV_IS_EXPORT_SYMBOL_GPL_refcount_dec_and_test 0

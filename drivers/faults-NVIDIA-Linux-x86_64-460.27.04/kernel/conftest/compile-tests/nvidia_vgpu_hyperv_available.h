@@ -1,1 +1,0 @@
-#define NV_VGPU_HYPERV_BUILD

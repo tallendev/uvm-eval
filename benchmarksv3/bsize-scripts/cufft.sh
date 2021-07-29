@@ -18,8 +18,8 @@ cd ../../tools/syslogger/
 make
 cd -
 
-#bsizes=(256 2048)
-bsizes=(32 64 128  256 512 1024 2048 4096 6144)
+bsizes=(256)
+#bsizes=(32 64 128  256 512 1024 2048 4096 6144)
 #bsizes=(32 64 128 256 512 1024 2048 4096 6144)
 
 psizes=()
@@ -28,7 +28,7 @@ if [ $# -gt 0 ]; then
         psizes+=(${!i})
     done
 else
-    psizes=(80000000)
+    psizes=(80000000 160000000)
 fi
 
 cd ../cufft

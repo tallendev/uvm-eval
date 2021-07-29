@@ -12,12 +12,16 @@ end
 
 function parse_input(inf::String, t)
 
-    f::Int32 = 0
+    h::Int64 = 0
+    m::Int64 = 0
+    p::Int64 = 0
+    e::Int64 = 0
 
     local faults::Vector{Fault}
     iranges::Vector{Int64} = [0]
     sizehint!(iranges, 4) # at least 3 i guess, who cares
     r::Int32 = 0
+    hits = Set{Int64}()
 
     GC.enable(false)
     begin
@@ -40,10 +44,12 @@ function parse_input(inf::String, t)
 
         println(stderr, "prealloc")
         @time faults = Vector{Fault}(undef, nlength)
+        sizehint!(hits, nlength)
 
         odata_len = length(odata)
         println(stderr, "foreach line assignment")
         index_offset = 0
+        most_recent_time = 0
         for index::Int64 in 1:nlength
             index -= index_offset
             #endc::Int64 = findnext(isequal(','), odata, begc)
@@ -53,17 +59,33 @@ function parse_input(inf::String, t)
             if kind != 's' && kind != 'b'
                 tokens = split(SubString(odata, begc, endc-1), ",")
                 #println(tokens)
-                #@inbounds 
-                if length(tokens) < 3
-                    println(tokens)
-                    println(stderr, "index:", index)
+                #@inbounds
+                if (length(tokens) > 2)
+                    most_recent_time = parse(Int64, tokens[3])
                 end
-                faults[index] = Fault(odata[begc],  parse(Int64, tokens[2], base=16) >> 12, parse(Int64, tokens[3]))
+                @inbounds faults[index] = Fault(odata[begc],  parse(Int64, tokens[2], base=16) >> 12, most_recent_time)
+
                 #@inbounds faults[index] = Fault(odata[begc],  parse(Int64, SubString(odata, begc+2, endc-1), base=16) >> 12)
-                @inbounds fault::Fault = faults[index]
+                #@inbounds 
+                fault::Fault = faults[index]
                 begc = endc + 1
-                if fault.kind == 'f'
-                    f += 1
+                if fault.kind == 'p'
+                    if !(fault.addr in hits)
+                        push!(hits, fault.addr)
+                        p += 1
+                    end
+                elseif fault.kind == 'f'
+                    if fault.addr in hits
+                        h += 1
+                    else
+                        push!(hits, fault.addr)
+                        m += 1
+                    end
+                elseif fault.kind == 'e'
+                    e += 1
+                    if fault.addr in hits
+                        delete!(hits, fault.addr)
+                    end
                 end
             else
                 begc = endc + 1 
@@ -77,49 +99,122 @@ function parse_input(inf::String, t)
 
     GC.enable(true)
     
-    println(stderr, "totalf: ", f)
+    #println(stderr, "totalf: ", f)
 
     println(stderr, "allocate y arrays")
     #hit miss predict
-    faddrs64::Vector{Int64} = Vector{Int64}(undef, f)
+    #faddrs64::Vector{Int64} = Vector{Int64}(undef, f)
+    haddrs64::Vector{Int64} = Vector{Int64}(undef, h)#zeros(Int64, h)
+    maddrs64::Vector{Int64} = Vector{Int64}(undef, m)#zeros(Int64, m)
+    paddrs64::Vector{Int64} = Vector{Int64}(undef, p)#zeros(Int64, p)
+    eaddrs64::Vector{Int64} = Vector{Int64}(undef, e)#zeros(Int64, e)
 
     println(stderr, "allocate x arrays")
 
     #hit miss predict
-    fx::Vector{Int64} = zeros(Int64, f)
-    i::Int32 = 0
-    f = 0
+    #fx::Vector{Int64} = zeros(Int64, f)
+    hx::Vector{Int64} = zeros(Int64, h)
+    mx::Vector{Int64} = zeros(Int64, m)
+    px::Vector{Int64} = zeros(Int64, p)
+    ex::Vector{Int64} = zeros(Int64, e)
+    i::Int64 = 0
+    h = 0
+    m = 0
+    p = 0
+    e = 0
 
-    
+
+    lko=0
+    hits = Set{Int64}()
+    sizehint!(hits, length(faults))
     GC.enable(false)
     
     println(stderr, "fill arrays")
     if t
         time_min = minimum(f->f.time, faults)
         @time for fault in faults
-            if fault.kind == 'f'
+             if fault.kind == 'p'
+                 if !(fault.addr in hits)
+                    push!(hits, fault.addr)
+                    @inbounds paddrs64[p+1] = fault.addr
+                    @inbounds px[p+1] = fault.time - time_min
+                    p += 1
+                end
+             elseif fault.kind == 'f'
+                #i += 1
+                #@inbounds faddrs64[f+1] = fault.addr
+                #@inbounds fx[f+1] = fault.time - time_min
+                #f += 1
                 i += 1
-                @inbounds faddrs64[f+1] = fault.addr
-                @inbounds fx[f+1] = fault.time - time_min
-                f += 1
+                if fault.addr in hits
+                    @inbounds haddrs64[h+1] = fault.addr
+                    @inbounds hx[h+1] = fault.time - time_min
+                    h += 1
+                else
+                   # should this line be here?
+                    push!(hits, fault.addr)
+                    @inbounds maddrs64[m+1] = fault.addr
+                    @inbounds mx[m+1] = fault.time - time_min
+                    m += 1
+                end
+            else
+                @inbounds eaddrs64[e+1] = fault.addr
+                @inbounds ex[e+1] = fault.time - time_min
+                e += 1
+                if fault.addr in hits
+                    delete!(hits, fault.addr)
+                end
             end
         end
     else
         @time for fault in faults
-            if fault.kind == 'f'
+            #if fault.kind == 'f'
+            #    i += 1
+            #    @inbounds faddrs64[f+1] = fault.addr
+            #    @inbounds fx[f+1] = i
+            #    f += 1
+            #end
+            lko += 1
+            #println("fault: ", lko, " ", length(faults), " ", fault.kind)
+            if fault.kind == 'p'
+                # idk if this is appropriate for oversubscribe
+                if !(fault.addr in hits)
+                    push!(hits, fault.addr)
+                    @inbounds paddrs64[p+1] = fault.addr
+                    @inbounds px[p+1] = i
+                    p += 1
+                end
+            elseif fault.kind == 'f'
                 i += 1
-                @inbounds faddrs64[f+1] = fault.addr
-                @inbounds fx[f+1] = i
-                f += 1
+                if fault.addr in hits
+                    @inbounds haddrs64[h+1] = fault.addr
+                    @inbounds hx[h+1] = i
+                    h += 1
+                else
+                   # should this line be here?
+                    push!(hits, fault.addr)
+                    @inbounds maddrs64[m+1] = fault.addr
+                    @inbounds mx[m+1] = i
+                    m += 1
+                end
+            else
+                @inbounds eaddrs64[e+1] = fault.addr
+                @inbounds ex[e+1] = i
+                e += 1
+                if fault.addr in hits
+                    delete!(hits, fault.addr)
+                end
             end
         end
     end 
     GC.enable(true)
 
-    return faddrs64, fx, iranges
+    #return faddrs64, fx, iranges
+    return haddrs64, maddrs64, paddrs64, eaddrs64, hx, mx, px, ex, iranges
 end
 
-function adjust_offsets(ranges, fulladdrs, faddrs64)
+#function adjust_offsets(ranges, fulladdrs, faddrs64)
+function adjust_offsets(ranges, fulladdrs, haddrs64, maddrs64, paddrs64, eaddrs64)
 
     offsets::Vector{Int64} = []
     @inline function scalar_red(val, thresh, off)
@@ -163,33 +258,60 @@ function adjust_offsets(ranges, fulladdrs, faddrs64)
     @assert(length(threshs) == length(offs))
     println(stderr, "haddrs adjust")
     GC.enable(false)
-    @time faddrs::Vector{Int32} = Vector{Int32}(undef, length(faddrs64)) #map(red, haddrs64)
-    faddrs .= red.(faddrs64)
+    #@time faddrs::Vector{Int32} = Vector{Int32}(undef, length(faddrs64)) #map(red, haddrs64)
+    #faddrs .= red.(faddrs64)
+    @time haddrs::Vector{Int32} = Vector{Int32}(undef, length(haddrs64)) #map(red, haddrs64)
+    haddrs .= red.(haddrs64)
 
+    println(stderr, "maddrs adjust")
+    @time maddrs::Vector{Int32} = Vector{Int32}(undef, length(maddrs64)) #map(red, maddrs64)
+    maddrs .= red.(maddrs64)
+
+    println(stderr, "paddrs adjust")
+    @time paddrs::Vector{Int32} = Vector{Int32}(undef, length(paddrs64)) #map(red, paddrs64)
+    paddrs .= red.(paddrs64)
+
+    println(stderr, "eaddrs adjust")
+    @time eaddrs::Vector{Int32} = Vector{Int32}(undef, length(eaddrs64)) #map(red, eaddrs64)
+    eaddrs .= red.(eaddrs64)
     GC.enable(true)
 
-    return faddrs
+    return haddrs, maddrs, paddrs, eaddrs
+    #return faddrs
 
 end
 
 function build_dataset(inf, t)
-    @time faddrs64, fx, iranges = parse_input(inf, t)
+    #@time faddrs64, fx, iranges = parse_input(inf, t)
+    @time haddrs64, maddrs64, paddrs64, eaddrs64, hx, mx, px, ex, iranges = parse_input(inf, t)#, STATS_ONLY)
     println(stderr, "Parse input")
     mint::Int64 = typemax(Int64) #0x7FFFFFFFFFFFFFFF
     #addrmin = min(min(paddrs), min(haddrs), min(maddrs)) 
     #
-    addrmin = minimum(faddrs64)
+    #addrmin = minimum(faddrs64)
+    addrmin = min(minimum(isempty(paddrs64) ? [mint] : paddrs64), 
+                  minimum(isempty(haddrs64) ? [mint] : haddrs64), 
+                  minimum(isempty(maddrs64) ? [mint] : maddrs64), 
+                  minimum(isempty(eaddrs64) ? [mint] : eaddrs64))
     println(stderr, "faddrs")
-    faddrs64 .-= addrmin
+    #faddrs64 .-= addrmin
+    paddrs64 .-= addrmin
+    println(stderr, "haddrs")
+    haddrs64 .-= addrmin
+    println(stderr, "maddrs")
+    maddrs64 .-= addrmin
+    eaddrs64 .-= addrmin
 
     ranges::Vector{Float64} = [i / 4096 for i in iranges]
 
-    println(stderr, "Num outputs: ", length(faddrs64))
+    #println(stderr, "Num outputs: ", length(faddrs64))
 
     println(stderr, "fulladdrs")
     fulladdrs = Set{Int64}()
-    sizehint!(fulladdrs, length(faddrs64))
-    union!(fulladdrs, Set{Int64}(faddrs64))
+    #sizehint!(fulladdrs, length(faddrs64))
+    sizehint!(fulladdrs, length(paddrs64) + length(haddrs64) + length(maddrs64) + length(eaddrs64))
+    #union!(fulladdrs, Set{Int64}(faddrs64))
+    union!(fulladdrs, Set{Int64}(paddrs64), Set{Int64}(haddrs64), Set{Int64}(maddrs64), Set{Int64}(eaddrs64))
 
     # try to adjust pages to fill gaps between ranges...
     pop!(ranges)
@@ -198,15 +320,18 @@ function build_dataset(inf, t)
     println(stderr, "ranges: ", ranges)
     println(stderr, "min, max, len: ", minimum(fulladdrs), ", ", maximum(fulladdrs), ", ", length(fulladdrs))
     
-    @time faddrs = adjust_offsets(ranges, fulladdrs, faddrs64)
+    #@time faddrs = adjust_offsets(ranges, fulladdrs, faddrs64)
+    @time haddrs, maddrs, paddrs, eaddrs = adjust_offsets(ranges, fulladdrs, haddrs64, maddrs64, paddrs64, eaddrs64)
     println(stderr, "adjust_offsets")
     
     # does this actually need to be reconstructed? probably 
     # also this is rly just debug info
     println(stderr, "Verify input now that it's organized")
     @time empty!(fulladdrs)
-    sizehint!(fulladdrs, length(faddrs))
-    @time union!(fulladdrs, Set{Int64}(faddrs))
+    #sizehint!(fulladdrs, length(faddrs))
+    sizehint!(fulladdrs, length(paddrs) + length(haddrs) + length(maddrs) + length(eaddrs))
+    #@time union!(fulladdrs, Set{Int64}(faddrs))
+    @time union!(fulladdrs, Set{Int64}(paddrs), Set{Int64}(haddrs), Set{Int64}(maddrs), Set{Int64}(eaddrs))
     #@time for i in 0:maximum(fulladdrs)-1
     #    if i in fulladdrs
     #    else
@@ -217,7 +342,8 @@ function build_dataset(inf, t)
     #end
     println(stderr, "min, max, len: ", minimum(fulladdrs), ", ", maximum(fulladdrs), ", ", length(fulladdrs))
     
-    return faddrs, fx, ranges
+    #return faddrs, fx, ranges
+    return haddrs, maddrs, paddrs, eaddrs, hx, mx, px, ex, ranges
 
 end
 
@@ -259,11 +385,20 @@ function main()
 
         fname = splitext(basename(inf))[1]
 
-        @time faddrs, fx, ranges = build_dataset(inf, time)
+    #    @time faddrs, fx, ranges = build_dataset(inf, time)
+        @time haddrs, maddrs, paddrs, eaddrs, hx, mx, px, ex, ranges = build_dataset(inf, time) #, STATS_ONLY)
         println(stderr, "build_dataset finished")
         if args["b"]
-            faddrs .= faddrs .÷ 512
-            faddrs .= faddrs .* 512
+            #faddrs .= faddrs .÷ 512
+            #faddrs .= faddrs .* 512
+            haddrs .= haddrs .÷ 512
+            haddrs .= haddrs .* 512
+            maddrs .= maddrs .÷ 512
+            maddrs .= maddrs .* 512
+            paddrs .= paddrs .÷ 512
+            paddrs .= paddrs .* 512
+            eaddrs .= eaddrs .÷ 512
+            eaddrs .= eaddrs .* 512
         end
 
 
@@ -271,8 +406,6 @@ function main()
             figname = "pattern.png"
         end
 
-        @show typeof(fx)
-        @show typeof(faddrs)
         GC.enable(false)
         @time h = plot(ranges, color=:black, seriestype=:hline, markersize=.1, linewidth=.1, label="")
         GC.enable(true)
@@ -294,8 +427,8 @@ function main()
         gfs=16
         tickfs=12
         if time
-            fx::Vector{Float64} = [Float64(t) for t in fx]
-            @time p = scatter!(fx, faddrs,
+            hx::Vector{Float64} = [Float64(t) for t in hx]
+            @time p = scatter!(hx, haddrs,
                     xlabel="Fault Occurence",
                     ylabel="Page Index",
                     label="",
@@ -311,8 +444,10 @@ function main()
                     grid = false,
                     #xformatter = x->string(Int(x/1e10),"*pow10")
                     ) 
+            #TODO fixme if you ever want actual misses this whole chunk needs tofixing FIXME
+            @time p = scatter!(mx, maddrs, color=:green, markersize=markersize, markerstrokewidth=0, label="Faults")
         else
-            @time p = scatter!(fx, faddrs,
+            @time p = scatter!(hx, haddrs,
                     xlabel="Fault Occurence",
                     ylabel="Page Index",
                     label="",
@@ -333,7 +468,13 @@ function main()
                     xformatter = :plain,
                     grid = false,
                     ) #layout=(1, 1),legend=false)
+            @time p = scatter!(mx, maddrs, color=:green, markersize=markersize, markerstrokewidth=0, label="Faults")
         end
+        if !isempty(ex)
+            @time p = scatter!(ex, eaddrs, color=:purple, markersize=markersize, markerstrokewidth=0, label="Evictions")
+           println(stderr, "evicts")
+        end
+
         push!(ps, p)
         @show inf
 

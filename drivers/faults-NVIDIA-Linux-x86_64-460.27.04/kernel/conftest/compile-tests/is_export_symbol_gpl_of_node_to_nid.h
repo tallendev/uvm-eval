@@ -1,1 +1,0 @@
-#define NV_IS_EXPORT_SYMBOL_GPL_of_node_to_nid 0

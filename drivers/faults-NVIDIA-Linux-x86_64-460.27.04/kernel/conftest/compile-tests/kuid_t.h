@@ -1,1 +1,0 @@
-#define NV_KUID_T_PRESENT

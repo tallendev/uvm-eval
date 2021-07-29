@@ -38,14 +38,15 @@ markersize=1
 
 #apps = ["cublas-long"]
 #apps = ["cublas", "linear", "random", "stream", "hpgmg", "cufft", "cublas-long", "hpgmg-parallel"]
-apps = ["cublas", "cublas-long", "linear", "random", "stream", "hpgmg", "tealeaf", "cufft", "tealeaf-parallel", "hpgmg-parallel", "cublas-long"]
+#apps = ["cublas", "cublas-long", "linear", "random", "stream", "hpgmg", "tealeaf", "cufft", "tealeaf-parallel", "hpgmg-parallel", "cublas-long", "gauss_seidel"]
+apps = ["gauss-seidel", "cufft"]
 #apps = ["cublas"]
 #apps = ["hpgmg"]
 #apps = ["cublas", "hpgmg"]
 #apps = ["cublas", "linear", "random", "stream", "hpgmg", "cufft"]
 
 sizes = {"cublas" : [16384, 32768], "linear" : [1048576, 8388608], "random" : [1048576, 8388608], "stream": [250001408, 750004224], "hpgmg": ["77", "88"], "tealeaf" : ["small-tea", "big-tea"], "cufft" : ["80000000"],\
-        "hpgmg-parallel": ["77", "88"], "tealeaf-parallel" : ["small-tea", "big-tea"], "cublas-long" : [16384]}
+        "hpgmg-parallel": ["77", "88"], "tealeaf-parallel" : ["small-tea", "big-tea"], "cublas-long" : [16384], "gauss-seidel" : [10000000, 20000000, 22000000, 30000000]}
 #sizes = {"cublas" : [16384], "linear" : [4194304], "random" : [4194304], "stream": [500002816]}
 bsizes = [256]
 #bsizes = [256, 2048]

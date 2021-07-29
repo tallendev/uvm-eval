@@ -9483,11 +9483,13 @@ NV_STATUS uvm_va_block_service_locked(uvm_processor_id_t processor_id,
         
         if (!service_context->num_retries && UVM_ID_IS_GPU(prefetch_hint.residency)) 
         {
+            /*
             for_each_va_block_page_in_mask(page_index, prefetch_hint.prefetch_pages_mask, va_block)
             {
                 printk("p,%llx", (page_index * PAGE_SIZE + start));
                 //printk("p,0x%llx", (page_index * PAGE_SIZE + start));
             }
+            */
             //tna
             //uvm_page_mask_zero(prefetch_hint.prefetch_pages_mask);
             //TODO: prolly don't need these two

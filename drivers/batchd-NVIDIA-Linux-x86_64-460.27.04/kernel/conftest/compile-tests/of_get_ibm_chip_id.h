@@ -1,1 +1,0 @@
-#undef NV_OF_GET_IBM_CHIP_ID_PRESENT

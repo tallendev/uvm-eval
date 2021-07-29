@@ -1,1 +1,0 @@
-#define NV_DRM_AVAILABLE

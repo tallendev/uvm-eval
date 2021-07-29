@@ -8,7 +8,7 @@
 ITERS=1
 
 module load cuda
-cd /home/tnallen/cuda11.2/faults-NVIDIA-Linux-x86_64-460.27.04/kernel
+cd ../../drivers/faults-NVIDIA-Linux-x86_64-460.27.04/kernel
 make
 sudo make modules_install
 cd -
@@ -25,8 +25,8 @@ if [ $# -gt 0 ]; then
         psizes+=(${!i})
     done
 else
-    #psizes=(8 8)
-    psizes=("6 7" "7 7" "7 8" "8 8" "9 9")
+    psizes=(8 8)
+    #psizes=("6 7" "7 7" "7 8" "8 8" "9 9")
 fi
 
 
