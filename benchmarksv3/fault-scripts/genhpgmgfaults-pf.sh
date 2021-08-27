@@ -32,7 +32,9 @@ fi
 
 
 cd ../hpgmg
-make clean
+if [ -d "build" ]; then
+    make clean
+fi
 rm -rf build
 ./build.sh
 
