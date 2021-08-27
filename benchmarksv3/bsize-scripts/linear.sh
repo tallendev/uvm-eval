@@ -6,6 +6,8 @@
 #SBATCH -t 48:00:00
 #SBATCH -o %x.%j.out
 
+
+export IGNORE_CC_MISMATCH=1
 ITERS=1
 
 module load cuda
@@ -18,7 +20,8 @@ cd ../../tools/syslogger/
 make
 cd -
 
-bsizes=(32 64 128 256 512 1024 2048 4096 6144)
+bsizes=(256)
+#bsizes=(32 64 128 256 512 1024 2048 4096 6144)
 #bsizes=(32 64 128 256 512 1024 2048 4096 6144)
 
 psizes=()

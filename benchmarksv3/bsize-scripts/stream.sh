@@ -6,6 +6,7 @@
 #SBATCH -t 48:00:00
 #SBATCH -o %x.%j.out
 
+export IGNORE_CC_MISMATCH=1
 ITERS=1
 
 module load cuda
@@ -18,7 +19,8 @@ cd ../../tools/syslogger/
 make
 cd -
 
-bsizes=(32 64 128 256 512 1024 2048 4096 6144)
+bsizes=(256)
+#bsizes=(32 64 128 256 512 1024 2048 4096 6144)
 #bsizes=(32 64 128 256 512 1024 2048 4096 6144)
 
 psizes=()
@@ -27,7 +29,8 @@ if [ $# -gt 0 ]; then
         psizes+=(${!i})
     done
 else
-    psizes=(125000704 250001408 375002112 500002816 625003520 750004224)
+    #psizes=(125000704 250001408 375002112 500002816 625003520 750004224)
+    psizes=(250001408 750004224)
 fi
 
 cd ../stream

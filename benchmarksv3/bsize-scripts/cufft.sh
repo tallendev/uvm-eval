@@ -6,6 +6,7 @@
 #SBATCH -t 48:00:00
 #SBATCH -o %x.%j.out
 
+export IGNORE_CC_MISMATCH=1
 ITERS=1
 
 module load cuda
@@ -28,7 +29,8 @@ if [ $# -gt 0 ]; then
         psizes+=(${!i})
     done
 else
-    psizes=(80000000 160000000)
+    psizes=(80000000)
+    #psizes=(80000000 16000000)
 fi
 
 cd ../cufft

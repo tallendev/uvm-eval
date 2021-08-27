@@ -6,6 +6,7 @@
 #SBATCH -t 48:00:00
 #SBATCH -o %x.%j.out
 
+export IGNORE_CC_MISMATCH=1
 ITERS=1
 
 module load cuda
@@ -19,8 +20,8 @@ make
 cd -
 
 #bsizes=(256 2048 )
-bsizes=(32 64 128 256 512 1024 2048 4096 6144)
-#bsizes=(256)
+#bsizes=(32 64 128 256 512 1024 2048 4096 6144)
+bsizes=(256)
 
 psizes=()
 if [ $# -gt 0 ]; then
@@ -29,8 +30,8 @@ if [ $# -gt 0 ]; then
     done
 else
     #psizes=($(expr 4096 \* 4))
-    #psizes=($(expr 4096 \* 4) $(expr 4096 \* 8))
-    psizes=(4096 $(expr 4096 \* 2) $(expr 4096 \* 3) $(expr 4096 \* 4) $(expr 4096 \* 5) $(expr 4096 \* 6) $(expr 4096 \* 7) $(expr 4096 \* 8))
+    psizes=($(expr 4096 \* 4) $(expr 4096 \* 8))
+    #psizes=(4096 $(expr 4096 \* 2) $(expr 4096 \* 3) $(expr 4096 \* 4) $(expr 4096 \* 5) $(expr 4096 \* 6) $(expr 4096 \* 7) $(expr 4096 \* 8))
     #psizes=( 256 )
 fi
 

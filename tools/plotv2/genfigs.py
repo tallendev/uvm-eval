@@ -37,9 +37,10 @@ marker="."
 markersize=1
 
 #apps = ["cublas-long"]
-#apps = ["cublas", "linear", "random", "stream", "hpgmg", "cufft", "cublas-long", "hpgmg-parallel"]
+apps = ["cublas", "linear", "random", "stream", "hpgmg", "cufft", "cublas-long", "hpgmg-parallel", "gauss-seidel"]
+
 #apps = ["cublas", "cublas-long", "linear", "random", "stream", "hpgmg", "tealeaf", "cufft", "tealeaf-parallel", "hpgmg-parallel", "cublas-long", "gauss_seidel"]
-apps = ["gauss-seidel", "cufft"]
+#apps = ["gauss-seidel", "cufft"]
 #apps = ["cublas"]
 #apps = ["hpgmg"]
 #apps = ["cublas", "hpgmg"]
@@ -96,7 +97,7 @@ def all_size_plot():
                         "font.size": 18,
                         "legend.fontsize" : 16})
 
-    myapps = [app for app in apps if "parallel" not in app and "long" not in app and "random" not in app and "tealeaf" not in app]
+    myapps = [app for app in apps if "parallel" not in app and "long" not in app and "random" not in app and "tealeaf" not in app and "gauss" not in app]
     files = [f'../../benchmarks/{app}/log_{sizes[app][0]}_bsize_256/{app}_0.txt' for app in myapps]
 
 
