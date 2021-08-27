@@ -14,6 +14,7 @@ import numpy as np
 class Experiment:
     # send in csv file stupidly labeled .txt
     def __init__(self, c):
+        print("Building experiment:", c)
         batches = []
         csv = None
         with open(c, 'r') as csvf:

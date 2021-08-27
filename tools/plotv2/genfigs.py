@@ -37,7 +37,7 @@ marker="."
 markersize=1
 
 #apps = ["cublas-long"]
-apps = ["cublas", "linear", "random", "stream", "hpgmg", "cufft", "cublas-long", "hpgmg-parallel", "gauss-seidel"]
+apps = ["cublas", "linear", "random", "stream", "hpgmg", "cublas-long", "hpgmg-parallel", "gauss-seidel"]
 
 #apps = ["cublas", "cublas-long", "linear", "random", "stream", "hpgmg", "tealeaf", "cufft", "tealeaf-parallel", "hpgmg-parallel", "cublas-long", "gauss_seidel"]
 #apps = ["gauss-seidel", "cufft"]

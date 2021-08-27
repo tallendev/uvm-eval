@@ -4,7 +4,6 @@ sbatch cublas.sh
 sbatch stream.sh
 sbatch linear.sh
 sbatch random.sh
-sbatch cufft.sh
 sbatch gs.sh
 sbatch hpgmg.sh
 sbatch hpgmg-p.sh
