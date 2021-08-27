@@ -5,10 +5,11 @@
 #SBATCH --exclusive
 #SBATCH -t 48:00:00
 
+export IGNORE_CC_MISMATCH=1
 ITERS=5
 
 module load cuda
-cd /home/tnallen/cuda11.2/faults-NVIDIA-Linux-x86_64-460.27.04/kernel
+cd ../../drivers/faults-NVIDIA-Linux-x86_64-460.27.04/kernel
 make
 sudo make modules_install
 cd -

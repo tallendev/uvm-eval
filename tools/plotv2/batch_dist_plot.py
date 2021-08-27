@@ -343,7 +343,7 @@ def main():
 
     xs = e.get_transfer_size() 
     #cs = e.get_map_ops()
-    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-size", "\# Mapping Ops")
+#    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-size", "\# Mapping Ops")
     #ps.append(p)
 
     cs = [c - t for t, c in zip(e.get_transfers(), e.get_total_faults())]
@@ -351,14 +351,14 @@ def main():
     #cs = [c for c in e.num_already_resident()]
     #cs = [c for c in e.get_num_mapped_pages()]
     #cs = [c for c in e.get_trimmed_faults()]
-    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev2", "Duplicates")
-    ps.append(p)
+#    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev2", "Duplicates")
+#    ps.append(p)
     cs = e.get_num_vablocks()
     p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev3", "VABlocks")
     ps.append(p)
-    cs = e.get_root_chunk_allocs()
-    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev4", "Root Chunk Allocs")
-    ps.append(p)
+#    cs = e.get_root_chunk_allocs()
+#    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev4", "Root Chunk Allocs")
+#    ps.append(p)
     
     cs = e.get_service_times()
     cs = [100 * c / y for c, y in zip(cs, ys)]
@@ -401,15 +401,15 @@ def main():
     p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev12", "Unmap Mapping Range % Time", poly=False)
     ps.append(p)
     
-    cs = e.get_unmap_rdup_times()
-    cs = [100 * c / y for c, y in zip(cs, ys)]
-    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev13", "Unmap Rdup % Time")
-    ps.append(p)
+#    cs = e.get_unmap_rdup_times()
+#    cs = [100 * c / y for c, y in zip(cs, ys)]
+#    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev13", "Unmap Rdup % Time")
+#    ps.append(p)
 
-    cs = e.get_rmask_get_allocs()
-    cs = [100 * c / y for c, y in zip(cs, ys)]
-    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev14", "RMask Get Alloc % Time")
-    ps.append(p)
+#    cs = e.get_rmask_get_allocs()
+#    cs = [100 * c / y for c, y in zip(cs, ys)]
+#    p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-sizev14", "RMask Get Alloc % Time")
+#    ps.append(p)
 
     cs = e.get_transfers() 
     p = size_time_plot_color(xs, ys, cs, psize, args, "transfer-size-trans", "Unique Transfers")

@@ -5,6 +5,8 @@
 #SBATCH --exclusive
 #SBATCH -t 48:00:00
 
+export IGNORE_CC_MISMATCH=1
+
 ITERS=1
 
 module load cuda

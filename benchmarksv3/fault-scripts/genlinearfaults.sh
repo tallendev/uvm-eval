@@ -6,6 +6,7 @@
 ##SBATCH --mail-user=tnallen@clemson.edu
 ##SBATCH --mail-type=ALL
 
+export IGNORE_CC_MISMATCH=1
 module load cuda 
 #sudo nvidia-smi -lgc 1912 -i 0,1,2,3
 export OMP_NUM_THREADS=32
@@ -15,7 +16,7 @@ export CUDA_VISIBLE_DEVICES=0
 mem=1
 
 
-cd /home/tnallen/cuda11.2/faults-NVIDIA-Linux-x86_64-460.27.04/kernel
+cd ../../drivers/faults-NVIDIA-Linux-x86_64-460.27.04/kernel
 make
 sudo make modules_install
 cd -
