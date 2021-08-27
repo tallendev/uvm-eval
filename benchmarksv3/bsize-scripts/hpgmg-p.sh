@@ -41,7 +41,9 @@ else
 fi
 
 cd ../hpgmg-parallel
-make clean
+if [ -d "build" ]; then
+    make clean
+fi
 rm -rf build
 ./build.sh
 
