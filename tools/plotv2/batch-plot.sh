@@ -5,6 +5,7 @@ echo $outname
 
 size="1.5"
 
+julia precompile.jl
 
 bench=(../../benchmarks/hpgmg/log_pf_8/hpgmg_0.txt)
 time julia --compile=all -O3  ./batch_plot.jl -m ','  -n "hpgmg_88_256.png" ${bench[@]} -s $size &
