@@ -9,6 +9,12 @@ plog*
 *.txt
 *_0
 
+*.cmd
+*.ko
+*conftest*.c
+*.json
+*.gz
+*.so*
 *.png
 
 
