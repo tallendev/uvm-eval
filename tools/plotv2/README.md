@@ -34,3 +34,6 @@ fault-style for reading CSVs and organizing them into a class hierarchy
 Plots and organizes faults by r/w\
 python3 ./read\_write\_batch\_plot.py [output.txt generated using faults driver]\
 Note: tools/plot has some legacy tools for other kinds of access pattern plotting
+### batch-plot.sh
+Generates the fault location + eviction plots seen in the case study of the paper. No args needed, although can 
+be modified to generate these plates for different benchmarks.
