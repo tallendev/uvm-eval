@@ -7,6 +7,10 @@ Each line is a fault:\
 "f,%llx,%llu,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n"\
 with the format:\
 fault_address,timestamp,fault_type,access_type,access_type_mask,num_instances,client_type,mmu_engine_type,client_id,mmu_engine_id,utlb_id,gpc_id,channel_id,ve_id, batch_id, discarded=False
+s, if it is the start of a batch\
+b, batch_id, status=0  indicates the end of a batch\
+a p in the above indicates a prefetch-generated fault\
+an e would indicate an eviction
 
 fault_address:\
 timestamp: time of fault written by mmu in buffer\
