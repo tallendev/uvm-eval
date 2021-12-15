@@ -33,7 +33,7 @@ make
 echo "starting dev $CUDA_VISIBLE_DEVICES node $mem mem $mem"
 for ((i=2**0; $i < 2**24; i=$i * 2)) do ## should be 0-20 12 - 33
     for ((j=0; j < 1; j+=1)) do
-        logdir="log_$(($i*4096))"
+        logdir="log_pf_$(($i*4096))"
         mkdir -p $logdir
 
         make clean
@@ -46,7 +46,7 @@ for ((i=2**0; $i < 2**24; i=$i * 2)) do ## should be 0-20 12 - 33
         logfile=/scratch1/$file
         pwd
 
-        /home/tnallen/dev/uvm-learn-redux/tools/syslogger/log "$logfile" &
+        ../../tools/syslogger/log "$logfile" &
         pid=$!
         sleep 8
 

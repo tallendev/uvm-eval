@@ -44,7 +44,7 @@ for ((i=0;i<${#psizes[@]}; i++)); do
         pwd
 
         sudo dmesg -C
-        /home/tnallen/dev/uvm-learn/data/scripts/log "$logfile" &
+        ../../tools/syslogger/log "$logfile" &
         pid=$!
         sleep 8
 

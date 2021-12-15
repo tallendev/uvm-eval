@@ -47,7 +47,7 @@ for ((i=2**0; $i < 2**24; i=$i * 2)) do ## should be 0-20 12 - 33
         logfile=/scratch1/$file
         pwd
 
-        /home/tnallen/dev/uvm-learn-redux/tools/syslogger/log "$logfile" &
+        ../../tools/syslogger/log "$logfile" &
         pid=$!
         sleep 8
 

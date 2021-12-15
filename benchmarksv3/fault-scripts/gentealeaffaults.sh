@@ -45,7 +45,7 @@ for ((i=0;i<${#psizes[@]}; i++)); do
     
         file=${psize}.in
 
-        /home/tnallen/dev/uvm-learn/data/scripts/log "$logfile" &
+        ../../tools/syslogger/log "$logfile" &
         pid=$!
         sleep 8
 

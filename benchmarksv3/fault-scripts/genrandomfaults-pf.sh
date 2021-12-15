@@ -9,10 +9,6 @@
 export IGNORE_CC_MISMATCH=1
 module load cuda 
 #sudo nvidia-smi -lgc 1912 -i 0,1,2,3
-export OMP_NUM_THREADS=32
-export OMP_PLACES=cores
-export OMP_PROC_BIND=spread
-export CUDA_VISIBLE_DEVICES=0
 mem=1
 
 
@@ -33,7 +29,7 @@ make
 echo "starting dev $CUDA_VISIBLE_DEVICES node $mem mem $mem"
 for ((i=2**0; $i < 2**24; i=$i * 2)) do ## should be 0-20 12 - 33
     for ((j=0; j < 1; j+=1)) do
-        logdir="log_$(($i*4096))"
+        logdir="log_pf_$(($i*4096))"
         mkdir -p $logdir
 
         make clean
@@ -41,12 +37,12 @@ for ((i=2**0; $i < 2**24; i=$i * 2)) do ## should be 0-20 12 - 33
 
         sudo dmesg -C
         sudo rmmod -f nvidia-uvm
-        sudo modprobe nvidia-uvm uvm_perf_prefetch_enable=0 #uvm_perf_fault_coalesce=0 #uvm_perf_fault_batch_count=1
+        sudo modprobe nvidia-uvm #uvm_perf_prefetch_enable=0 #uvm_perf_fault_coalesce=0 #uvm_perf_fault_batch_count=1
         file=random_$j
         logfile=/scratch1/$file
         pwd
 
-        /home/tnallen/dev/uvm-learn-redux/tools/syslogger/log "$logfile" &
+        ../../tools/syslogger/log "$logfile" &
         pid=$!
         sleep 8
 
