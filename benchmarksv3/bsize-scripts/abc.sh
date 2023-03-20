@@ -36,7 +36,7 @@ cd ../abc
 rm -f quant*.csv
 find . -maxdepth 1  -name 'log_*' -type d -exec rm -rf {} +
 
-cd ../../drivers/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel
+cd ../../drivers/x86_64-460.27.04/batchd/kernel
     
 make -j
 sudo make modules_install

@@ -32,6 +32,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <fcntl.h>
+#include <unistd.h>
 //------------------------------------------------------------------------------------------------------------------------------
 #ifdef USE_MPI
 #include <mpi.h>
@@ -201,6 +203,7 @@ int main(int argc, char **argv){
   int64_t boxes_in_i             = -1;
   int64_t target_boxes           = -1;
 
+
   if(argc==3){
              log2_box_dim=atoi(argv[1]);
     target_boxes_per_rank=atoi(argv[2]);
@@ -322,6 +325,8 @@ int main(int argc, char **argv){
   fprintf(stdout,"\n\n===== Benchmark setup ==========================================================\n");
   }
 
+  int fd = open("/proc/tlb_stats", O_RDWR);
+  write(fd, "c", 1);
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   // create the fine level...
@@ -380,6 +385,8 @@ int main(int argc, char **argv){
     if(my_rank==0){fprintf(stdout,"\n\n===== Timing Breakdown =========================================================\n");}
     MGPrintTiming(&MG_h,l);
   }
+    write(fd, "s", 1);
+    close(fd);
 
   if(my_rank==0){
     #ifdef CALIBRATE_TIMER

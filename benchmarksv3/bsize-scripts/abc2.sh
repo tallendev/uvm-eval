@@ -35,7 +35,7 @@ cd ../abc
 rm -f quant2*.csv
 find . -maxdepth 1  -name 'log2_*' -type d -exec rm -rf {} +
 
-cd /home/tnallen/cuda11.2/faults-cache-NVIDIA-Linux-x86_64-460.27.04/kernel
+cd /home/tnallen/cuda11.2/faults-cache-x86_64-460.27.04/vanilla/kernel
     
 make -j
 sudo make modules_install

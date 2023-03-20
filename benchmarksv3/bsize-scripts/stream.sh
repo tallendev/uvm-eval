@@ -29,8 +29,8 @@ if [ $# -gt 0 ]; then
         psizes+=(${!i})
     done
 else
-    #psizes=(125000704 250001408 375002112 500002816 625003520 750004224)
-    psizes=(250001408 750004224)
+    psizes=(125000704 250001408 375002112 500002816 625003520 750004224)
+    #psizes=(250001408 750004224)
 fi
 
 cd ../stream
@@ -40,7 +40,7 @@ rm -f quant*.csv
 find . -maxdepth 1  -name 'log_*' -type d -exec rm -rf {} +
 
 
-cd ../../drivers/batchd-NVIDIA-Linux-x86_64-460.27.04/kernel
+cd ../../drivers/x86_64-460.27.04/batchd/kernel
     
 make -j
 sudo make modules_install

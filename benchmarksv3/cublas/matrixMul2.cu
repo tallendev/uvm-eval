@@ -34,6 +34,8 @@
 // Helper functions and utilities to work with CUDA
 #include <helper_functions.h>
 #include <helper_cuda.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 //#include "Timer.h"
 
@@ -257,6 +259,9 @@ long MatrixMultiply(//int argc, char **argv,
     cudaEvent_t stop;
     checkCudaErrors(cudaEventCreate(&stop));
 
+
+    int fd = open("/proc/tlb_stats", O_RDWR);
+    write(fd, "c", 1);
     // Record the start event
     checkCudaErrors(cudaEventRecord(start, NULL));
     size_t nIter = 1;
@@ -359,6 +364,8 @@ long MatrixMultiply(//int argc, char **argv,
 
     // Record the stop event
     checkCudaErrors(cudaEventRecord(stop, NULL));
+    write(fd, "s", 1);
+    close(fd);
 
     // Wait for the stop event to complete
     checkCudaErrors(cudaEventSynchronize(stop));

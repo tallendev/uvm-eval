@@ -18,8 +18,10 @@ apps=( cublas )
 #apps=( stream tealeaf hpgmg)
 
 #ls ../../benchmarks/cublas/quant-*.csv
-#python3 ./perf_bs_plot.py ../../benchmarks/cublas/quant-[0-9]*.csv -o "cublas-perf.png"
-#python3 ./perf_bs_plot.py ../../benchmarks/cublas/quant-pf-*.csv -o "cublas-pf-perf.png"
+python3 ./perf_bs_plot.py ../../benchmarks/cublas/quant-[0-9]*.csv -o "cublas-perf.png"
+python3 ./perf_bs_plot.py ../../benchmarks/cublas/quant-pf-*.csv -o "cublas-pf-perf.png"
+
+exit
 date
 for app in ${apps[@]}; do
 
