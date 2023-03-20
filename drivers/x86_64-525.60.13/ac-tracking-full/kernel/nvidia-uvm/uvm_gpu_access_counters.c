@@ -1647,6 +1647,8 @@ static NV_STATUS service_virt_notifications(uvm_gpu_t *gpu,
 
 void uvm_gpu_service_access_counters(uvm_gpu_t *gpu)
 {
+    uint64_t t0,t1;
+    NvU32 i;
     NV_STATUS status = NV_OK;
     uvm_access_counter_service_batch_context_t *batch_context = &gpu->parent->access_counter_buffer_info.batch_service_context;
 
@@ -1659,6 +1661,17 @@ void uvm_gpu_service_access_counters(uvm_gpu_t *gpu)
         batch_context->num_cached_notifications = fetch_access_counter_buffer_entries(gpu,
                                                                                       batch_context,
                                                                                       NOTIFICATION_FETCH_MODE_BATCH_READY);
+        t0 = NV_GETTIME();
+        printk("s,%d\n", batch_context->num_cached_notifications);
+        for (i = 0; i < batch_context->num_cached_notifications; ++i) {                                                         
+            uvm_access_counter_buffer_entry_t *current_entry = &batch_context->notification_cache[i];
+            printk("a,%llx,%d,%d,%d,%d,%d,%d,%d,%llu,%d,%d,%d\n",
+                    current_entry->address.address, current_entry->address.aperture, current_entry->address.is_virtual,
+                    current_entry->counter_value, current_entry->sub_granularity, 
+                    current_entry->counter_type, current_entry->bank, current_entry->tag,
+                    current_entry->virtual_info.instance_ptr.address, current_entry->virtual_info.instance_ptr.aperture,
+                    current_entry->virtual_info.mmu_engine_type, current_entry->virtual_info.ve_id);                                                                     
+        }
         if (batch_context->num_cached_notifications == 0)
             break;
 
@@ -1671,6 +1684,8 @@ void uvm_gpu_service_access_counters(uvm_gpu_t *gpu)
         status = service_phys_notifications(gpu, batch_context);
         if (status != NV_OK)
             break;
+        t1 = NV_GETTIME();
+        printk("b,%llu,%u\n", t1 - t0, status);
     }
 
     if (status != NV_OK) {

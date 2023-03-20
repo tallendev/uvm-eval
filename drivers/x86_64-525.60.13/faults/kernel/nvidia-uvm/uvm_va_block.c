@@ -10450,6 +10450,12 @@ NV_STATUS uvm_va_block_evict_chunks(uvm_va_block_t *va_block,
     // Only move pages resident on the GPU
     uvm_page_mask_and(pages_to_evict, pages_to_evict, uvm_va_block_resident_mask_get(va_block, gpu->id));
 
+    // tna print vablock addr
+    printk("e,%llx\n", va_block->start);
+    //for_each_va_block_page_in_mask(page_index, pages_to_evict, va_block) {
+        //printk("e,0x%llx\n", (page_index * PAGE_SIZE + va_block->start));
+    //}
+
     block_context->policy = uvm_va_range_get_policy(va_block->va_range);
 
     // TODO: Bug 1765193: make_resident() breaks read-duplication, but it's not

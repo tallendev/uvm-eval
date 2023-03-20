@@ -1498,6 +1498,7 @@ static NV_STATUS service_fault_batch(uvm_gpu_t *gpu,
                                      fault_service_mode_t service_mode,
                                      uvm_fault_service_batch_context_t *batch_context)
 {
+    uint64_t t0,t1;
     NV_STATUS status = NV_OK;
     NvU32 i;
     uvm_va_space_t *va_space = NULL;
@@ -1512,6 +1513,20 @@ static NV_STATUS service_fault_batch(uvm_gpu_t *gpu,
     UVM_ASSERT(gpu->parent->replayable_faults_supported);
 
     ats_invalidate->write_faults_in_batch = false;
+    
+    // tna
+    printk("s,\n");
+    for (i = 0; i < batch_context->num_coalesced_faults; i++) {                                                         
+        uvm_fault_buffer_entry_t *current_entry = batch_context->ordered_fault_cache[i];                                
+        printk("f,%llx,%llu,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", current_entry->fault_address, current_entry->timestamp, current_entry->fault_type,
+                current_entry->fault_access_type, current_entry->access_type_mask, current_entry->num_instances,        
+                current_entry->fault_source.client_type, current_entry->fault_source.mmu_engine_type,                   
+                current_entry->fault_source.client_id, current_entry->fault_source.mmu_engine_id,                       
+                current_entry->fault_source.utlb_id, current_entry->fault_source.gpc_id, current_entry->fault_source.channel_id,
+                current_entry->fault_source.ve_id);                                                                     
+    }   
+    // tna
+    t0 = NV_GETTIME();
 
     for (i = 0; i < batch_context->num_coalesced_faults;) {
         uvm_va_block_t *va_block;
@@ -1653,6 +1668,10 @@ fail:
         uvm_va_space_up_read(va_space);
         uvm_va_space_mm_release_unlock(va_space, mm);
     }
+    
+    //tna
+    t1 = NV_GETTIME();
+    printk("b,%llu,%u\n", t1 - t0, status);
 
     return status;
 }

@@ -522,6 +522,8 @@ void uvm_va_range_destroy(uvm_va_range_t *va_range, struct list_head *deferred_f
             // Skip partially-created ranges with unset types
             break;
         case UVM_VA_RANGE_TYPE_MANAGED:
+            // tna
+            printk("uvm range destroy va_range->node.start, va_range->size: 0x%llx, %llu\n", va_range->node.start, uvm_va_range_size(va_range));
             uvm_va_range_destroy_managed(va_range);
             break;
         case UVM_VA_RANGE_TYPE_EXTERNAL:
