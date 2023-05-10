@@ -409,7 +409,7 @@ class Fault:
 
     def __init__(self,fault_address,timestamp=-1,fault_type=-1,access_type=-1,access_type_mask=-1,num_instances=-1,client_type=-1,mmu_engine_type=-1,client_id=-1,mmu_engine_id=-1,utlb_id=-1,gpc_id=-1,channel_id=-1,ve_id="-1", batch_id=-1, discarded=False):
         self.fault_address = int(fault_address,16)
-        self.preftech = timestamp == -1
+        self.prefetch = timestamp == -1
         self.timestamp = int(timestamp)
         self.fault_type = self.fault_type_translate(fault_type)
         self.access_type = self.access_type_translate(access_type)
@@ -427,6 +427,7 @@ class Fault:
         self.ve_id = int(ve_id.strip())
         self.batch_id = batch_id
         self.discarded = discarded
+
 
     # UVM_FAULT_TYPE_INVALID_PDE = 0,                                                                                     
     # UVM_FAULT_TYPE_INVALID_PTE,                                                                                         
@@ -548,6 +549,12 @@ class Fault:
             return None
         else:
             print ("Idk this mmu_engine_type???")
+
+    def __eq__(self, other):
+        return self.fault_address == other.fault_address
+
+    def __hash__(self):
+        return hash(self.fault_address)
 
 def main():
     parser = argparse.ArgumentParser()

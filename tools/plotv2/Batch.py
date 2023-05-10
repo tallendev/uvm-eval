@@ -21,6 +21,7 @@ class Experiment:
             csv = csvf.readlines()
         for bid, line in enumerate(csv):
             cols = line.split(',')
+            print(cols)
             try:
                 batches.append(Batch(bid, *cols[1:]))
             except TypeError as e:
