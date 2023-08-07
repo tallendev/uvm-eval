@@ -3,6 +3,7 @@ import multiprocessing
 import sys
 import os
 import argparse
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from os.path import basename, splitext, dirname
 from collections import defaultdict
@@ -18,6 +19,11 @@ import numpy as np
 from Fault import Experiment
 
 from enum import Enum
+
+from concurrent.futures import ThreadPoolExecutor
+
+#import dask.bag as db
+#from dask.distributed import Client
 
 class DupTypes(Enum):
     INTRA = "intra"
@@ -61,6 +67,9 @@ def main():
     parser.add_argument('-o', type=str, default="", help='output filename')
 
     args = parser.parse_args()
+    #with Client(processes=True) as client:
+    #    bag = db.from_sequence(args.csv_files)
+    #    bag.map(process_csv).compute()
     #for c in args.csv_files:
     with ThreadPoolExecutor() as executor:
         executor.map(process_csv, args.csv_files)
@@ -74,100 +83,120 @@ def process_csv(c):
     ranges, faults, batches, num_batches = e.get_raw_data()
     e.print_info()
     ranges.append(sys.maxsize)
-    for v in DupTypes:
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(lambda v: process_dup_type(v, c, ranges, faults, batches, num_batches, e), DupTypes)
+
+
+def process_dup_type(v, c, ranges, faults, batches, num_batches, e):
+    if v == DupTypes.INTRA:
+        outdir = "fitdupfaultsintra"
+        label = f"Intra-SM Duplicates"
+    elif v == DupTypes.INTER:
+        outdir = "fitdupfaultsinter"
+        label = f"Inter-SM Duplicates"
+    elif v == DupTypes.ALL:
+        outdir = "fitdupfaultsall"
+        label = f"All Duplicates"
+    else:
+        print("Type doesn't match????????")
+        sys.exit(1)
+
+
+    bdups = []
+    faultlist = []
+    for b in batches:
+        faults = [f.fault_address for f in b]
+        faultlist += faults
         if v == DupTypes.INTRA:
-            outdir = "fitdupfaultsintra"
-            label = f"Intra-SM Duplicates"
+            # intra does special processing that eliminates the need to -1 counts
+            unique, counts = count_occurrences_intra(b)
         elif v == DupTypes.INTER:
-            outdir = "fitdupfaultsinter"
-            label = f"Inter-SM Duplicates"
+            unique, counts = count_occurrences(faults)
+            counts = [c - 1 for c in counts]
         elif v == DupTypes.ALL:
-            outdir = "fitdupfaultsall"
-            label = f"All Duplicates"
+            unique, counts = count_occurrences_all(b)
+            counts = [c - 1 for c in counts]
         else:
-            print("Type doesn't match????????")
+            print("Type doesn't match???")
             sys.exit(1)
+        bdups.append(sum(counts))
+    fmin = min(faultlist)
+    bdups.sort()
+    plot_hist(bdups, c, label, outdir)
 
-
-        bdups = []
-        faultlist = []
+    for i in range(len(ranges) - 1):
+        rbatches = []
+        rbfaults = []
+        rbdups = []
         for b in batches:
-            faults = [f.fault_address for f in b]
-            faultlist += faults
-            if v == DupTypes.INTRA:
-                # intra does special processing that eliminates the need to -1 counts
+            for j in range(len(b)):
+                batch = []
+                for fault in b:
+                    if ranges[i] <= fault.fault_address < ranges[i + 1]:
+                        batch.append(fault)
+                if batch:
+                    rbatches.append(b)
+        if (rbatches):
+            for b in rbatches:
+                _, counts = count_occurrences_all(b)
+                rbfaults.append(sum(counts))
                 unique, counts = count_occurrences_intra(b)
-            elif v == DupTypes.INTER:
-                unique, counts = count_occurrences(faults)
-                counts = [c - 1 for c in counts]
-            elif v == DupTypes.ALL:
-                unique, counts = count_occurrences_all(b)
-                counts = [c - 1 for c in counts]
-            else:
-                print("Type doesn't match???")
-                sys.exit(1)
-            bdups.append(sum(counts))
-        fmin = min(faultlist)
-        plot_hist(bdups, c, label, outdir)
-
-        for i in range(len(ranges) - 1):
-            rbatches = []
-            rbfaults = []
-            rbdups = []
-            for b in batches:
-                for j in range(len(b)):
-                    batch = []
-                    for fault in b:
-                        if ranges[i] <= fault.fault_address < ranges[i + 1]:
-                            batch.append(fault)
-                    if batch:
-                        rbatches.append(b)
-            if (rbatches):
-                for b in rbatches:
-                    _, counts = count_occurrences_all(b)
-                    rbfaults.append(sum(counts))
-                    unique, counts = count_occurrences_intra(b)
-                    counts = [c for c in counts]
-                    rbdups.append(sum(counts))
-            r = ranges[i] - fmin
-            plot_hist(bdups, c, label, outdir, ext=f"-{hex(r)}")
+                counts = [c for c in counts]
+                rbdups.append(sum(counts))
+        r = ranges[i] - fmin
+        rbdups.sort()
+        plot_hist(rbdups, c, label, outdir, ext=f"-{hex(r)}")
 
 def fit_and_plot_distribution(args):
     x, csv, xlabel, outdir, ext, distribution = args
-
+    #x = [i for i in x if i != 0]
     # Get the fitted parameters and calculate the sum of squared errors
     try:
         params = distribution.fit(x)
+        print("params:", params)
         sse = np.sum((x - distribution(*params).rvs(len(x))) ** 2)
     except Exception as e:
         print(f"Error fitting {distribution.name}: {e}")
         return None
 
-    plt.clf()
+    try:
+        plt.clf()
 
-    matplotlib.rcParams['agg.path.chunksize'] = 10000
-    plt.rcParams["figure.figsize"] = (18.5, 10.5)
+        matplotlib.rcParams['agg.path.chunksize'] = 10000
+        plt.rcParams["figure.figsize"] = (18.5, 10.5)
+        histogram, bins = np.histogram(x, density=True)
+        #plt.stairs(histogram, bins)
+        #counts, bins = plt.hist(x, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
+        bin_centers = 0.5 * (bins[1:] + bins[:-1])
+        pdf = distribution(*params).pdf(bin_centers)
+        #xmin, xmax = plt.xlim()
+        #x_values = np.linspace(xmin, xmax, 5)
+        #pdf = distribution(*params).pdf(x_values)
+        plt.bar(bin_centers, histogram, width=bins[1] - bins[0])
+        plt.plot(bin_centers, pdf, label=f"{distribution.name}", color='red')
+        #pdf = distribution(*params).pdf(x)
+        #print("pdf:", pdf)
+        #plt.plot(x, pdf, label=f"{distribution.name}", color='red')
+        plt.xlabel(xlabel)
+        plt.legend(loc='upper right')
 
-    plt.hist(x, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
-    pdf = distribution(*params).pdf(x)
-    plt.plot(x, pdf, label=f"{distribution.name}")
-    plt.xlabel(xlabel)
-    plt.legend(loc='upper right')
+        psize = basename(dirname(csv))
+        prefix = splitext(basename(csv))[0].split('_')[0] + "-" + psize.split("_")[1]
+        plt.title(f"{prefix}-{distribution.name}")
 
-    psize = basename(dirname(csv))
-    prefix = splitext(basename(csv))[0].split('_')[0] + "-" + psize.split("_")[1]
-    plt.title(f"{prefix}-{distribution.name}")
+        plt.xticks(rotation=90, fontsize='small')
 
-    plt.xticks(rotation=90, fontsize='small')
+        full_outdir = f"{outdir}/{prefix}/"
+        if not os.path.exists(full_outdir):
+            os.makedirs(full_outdir)
+        figname = full_outdir + (splitext(basename(csv))[0] + "-" + psize + f"-dupshist{ext}-{distribution.name}.png").replace("_", "-")
 
-    full_outdir = f"{outdir}/{prefix}/"
-    if not os.path.exists(full_outdir):
-        os.makedirs(full_outdir)
-    figname = full_outdir + (splitext(basename(csv))[0] + "-" + psize + f"-dupshist{ext}-{distribution.name}.png").replace("_", "-")
-
-    plt.tight_layout()
-    print('saving figure:', figname)
-    plt.savefig(figname)
+        plt.tight_layout()
+        print('saving figure:', figname)
+        plt.savefig(figname)
+    except Exception as e:
+        print(f"wtf:", e, traceback.format_exc())
+        return None
 
     return (sse, distribution, params)
 
@@ -181,6 +210,8 @@ def plot_hist(x, csv, xlabel, outdir, ext=""):
     args = [(x, csv, xlabel, outdir, ext, distribution) for distribution in distributions]
 
     # Use a multiprocessing Pool to parallelize the fitting and plotting of distributions
+    #bag = db.from_sequence(args)
+    #results = bag.map(fit_and_plot_distribution).compute()
     with multiprocessing.Pool() as pool:
         results = pool.map(fit_and_plot_distribution, args)
 
@@ -191,69 +222,7 @@ def plot_hist(x, csv, xlabel, outdir, ext=""):
     psize = basename(dirname(csv))
     prefix = splitext(basename(csv))[0].split('_')[0] + "-" + psize.split("_")[1]
     full_outdir = f"{outdir}/{prefix}/"
-    open(full_outdir + "/best.txt", 'w').write(f"Best: {best_distribution.name}, {best_params}\n")
-
-"""
-def plot_hist(x, csv, xlabel, outdir, ext=""):
-    # x dups
-    # y faults
-
-    distributions = [
-        stats.alpha, stats.beta, stats.gamma, stats.norm, stats.lognorm, stats.uniform,
-        stats.expon, stats.logistic, stats.cauchy, stats.weibull_min, stats.weibull_max
-    ]
-
-    # Best fitting distribution and parameters
-    best_distribution = None
-    best_params = None
-    best_sse = np.inf
-
-    psize = basename(dirname(csv))  # .split("_")[-1]
-    prefix = splitext(basename(csv))[0].split('_')[0] + "-" + psize.split("_")[1]
-    full_outdir = f"{outdir}/{prefix}/"
-    # Fit each distribution to the data
-    for distribution in distributions:
-        try:
-            # Get the fitted parameters
-            params = distribution.fit(x)
-
-            # Calculate the sum of squared errors
-            sse = np.sum((x - distribution(*params).rvs(len(x))) ** 2)
-
-        except Exception as e:
-            print(f"Error fitting {distribution.name}: {e}")
-            continue
-        # Update the best distribution if the current one has a lower SSE
-        if sse < best_sse:
-            best_distribution = distribution
-            best_params = params
-            best_sse = sse
-
-        plt.clf()
-
-        matplotlib.rcParams['agg.path.chunksize'] = 10000
-        plt.rcParams["figure.figsize"] = (18.5, 10.5)
-
-        plt.hist(x, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
-        pdf = distribution(*params).pdf(x)
-        plt.plot(x, pdf, label=f"{distribution.name}")
-        plt.xlabel(xlabel)
-        plt.legend(loc='upper right')
-
-        plt.title(f"{prefix}-{distribution.name}")
-
-        plt.xticks(rotation=90, fontsize='small')
-
-        if not os.path.exists(full_outdir):
-            os.makedirs(full_outdir)
-        figname = full_outdir + (splitext(basename(csv))[0] + "-" + psize + f"-dupshist{ext}-{distribution.name}.png").replace(
-            "_", "-")
-
-        plt.tight_layout()
-        print('saving figure:', figname)
-        plt.savefig(figname)
-    open(full_outdir + "/best.txt", 'w').write(f"Best: {best_distribution.name}, {best_params}\n")
-"""
+    open(full_outdir + f"/best{ext}.txt", 'w').write(f"Best: {best_distribution.name}, {best_params}\n")
 
 if __name__== "__main__":
     main()
