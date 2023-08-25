@@ -1,29 +1,28 @@
 import argparse
 import os
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 def scatter_plot_by_allocation_time(batches_df, headers, output_file, timelimit):
     # Iterate through each unique allocation
     min_timestamp = batches_df['timestamp'].min()
     for allocation in batches_df['allocation'].unique():
-        subset = batches_df[(batches_df['allocation'] == allocation) & (batches_df['timestamp'] < (min_timestamp + timelimit))]
+        subset = batches_df[(batches_df['allocation'] == allocation) & (batches_df['timestamp'] < (min_timestamp + timelimit))].drop_duplicates(subset='fault_address', keep='first')
 
-        # Compute Density1
-        #num_instances = subset['num_instances'].sum()
-        num_instances = len(subset)
-        # of pages in range
-        allocation_length = headers[allocation] // 4096  # assuming allocation_length is available in the dataframe
-        density1 = num_instances / allocation_length
-
-        # Compute Density2
         smallest_page = subset['fault_address'].min() // 4096
         largest_page = subset['fault_address'].max() // 4096
-        density2 = (largest_page - smallest_page) / allocation_length
+        allocation_length = headers[allocation] // 4096
+
+        page_range = largest_page - smallest_page + 1
+
+        density1 = len(subset) / page_range
+
+        density2 = (page_range) / allocation_length
 
         plt.scatter(density2, density1, marker='*', label=hex(allocation))
 
@@ -41,19 +40,17 @@ def scatter_plot_by_allocation_time(batches_df, headers, output_file, timelimit)
 def scatter_plot_by_allocation_batchcap_application(batches_df, headers, output_file, batchcap):
     # Iterate through each unique allocation
     for allocation in batches_df['allocation'].unique():
-        subset = batches_df[(batches_df['allocation'] == allocation) & (batches_df['batch_id'] < batchcap)]
+        subset = batches_df[(batches_df['allocation'] == allocation) & (batches_df['batch_id'] < batchcap)].drop_duplicates(subset='fault_address', keep='first')
 
-        # Compute Density1
-        #num_instances = subset['num_instances'].sum()
-        num_instances = len(subset)
-        # of pages in range
-        allocation_length = headers[allocation] // 4096  # assuming allocation_length is available in the dataframe
-        density1 = num_instances / allocation_length
-
-        # Compute Density2
         smallest_page = subset['fault_address'].min() // 4096
         largest_page = subset['fault_address'].max() // 4096
-        density2 = (largest_page - smallest_page) / allocation_length
+        allocation_length = headers[allocation] // 4096
+
+        page_range = largest_page - smallest_page + 1
+
+        density1 = len(subset) / page_range
+
+        density2 = (page_range) / allocation_length
 
         plt.scatter(density2, density1, marker='*', label=hex(allocation))
 
@@ -72,19 +69,17 @@ def scatter_plot_by_allocation_batchcap_by_allocation(batches_df, headers, outpu
     # Iterate through each unique allocation
     for allocation in batches_df['allocation'].unique():
         first_batch_id = batches_df[(batches_df['allocation'] == allocation)]['batch_id'].min()
-        subset = batches_df[(batches_df['allocation'] == allocation)  & (batches_df['batch_id'] < (batchcap + first_batch_id))]
+        subset = batches_df[(batches_df['allocation'] == allocation)  & (batches_df['batch_id'] < (batchcap + first_batch_id))].drop_duplicates(subset='fault_address', keep='first')
 
-        # Compute Density1
-        #num_instances = subset['num_instances'].sum()
-        num_instances = len(subset)
-        # of pages in range
-        allocation_length = headers[allocation] // 4096  # assuming allocation_length is available in the dataframe
-        density1 = num_instances / allocation_length
-
-        # Compute Density2
         smallest_page = subset['fault_address'].min() // 4096
         largest_page = subset['fault_address'].max() // 4096
-        density2 = (largest_page - smallest_page) / allocation_length
+        allocation_length = headers[allocation] // 4096
+
+        page_range = largest_page - smallest_page + 1
+
+        density1 = len(subset) / page_range
+
+        density2 = (page_range) / allocation_length
 
         plt.scatter(density2, density1, marker='*', label=hex(allocation))
 
@@ -127,14 +122,18 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation(batches_df, he
             if alloc != allocation:
                 continue
 
-            num_instances = len(group_data)
-            allocation_length = headers[allocation] // 4096
-            density1 = num_instances / allocation_length
-            density1_values.append(density1)
+            group_data = group_data.drop_duplicates(subset='fault_address', keep='first')
 
             smallest_page = group_data['fault_address'].min() // 4096
             largest_page = group_data['fault_address'].max() // 4096
-            density2 = (largest_page - smallest_page) / allocation_length
+            allocation_length = headers[allocation] // 4096
+
+            page_range = largest_page - smallest_page + 1
+
+            density1 = len(group_data) / page_range
+            density1_values.append(density1)
+
+            density2 = (page_range) / allocation_length
             density2_values.append(density2)
 
             # Color based on the batch group progression
@@ -193,16 +192,20 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling(batche
         for group_idx, ((alloc, batch_group), group_data_original) in enumerate(grouped_data):
             if alloc != allocation or group_idx == (len(grouped_data) - 1):
                 continue
-            group_data = pd.concat([group_data_original, old_group_data])
-            num_instances = len(group_data)
-            allocation_length = headers[allocation] // 4096
-            density1 = num_instances / allocation_length
-            density1_values.append(density1)
+            group_data = pd.concat([group_data_original, old_group_data]).drop_duplicates(subset='fault_address', keep='first')
 
             smallest_page = group_data['fault_address'].min() // 4096
             largest_page = group_data['fault_address'].max() // 4096
-            density2 = (largest_page - smallest_page) / allocation_length
+            allocation_length = headers[allocation] // 4096
+
+            page_range = largest_page - smallest_page + 1
+
+            density1 = len(group_data) / page_range
+            density1_values.append(density1)
+
+            density2 = (page_range) / allocation_length
             density2_values.append(density2)
+
 
             # Color based on the batch group progression
             if num_batch_groups > 1:
@@ -288,15 +291,18 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timese
         for group_idx, ((alloc, batch_group), group_data_original) in enumerate(grouped_data):
             if alloc != allocation:
                 continue
-            group_data = pd.concat([group_data_original, old_group_data])
-            num_instances = len(group_data)
-            allocation_length = headers[allocation] // 4096
-            density1 = num_instances / allocation_length
-            density1_values.append(density1)
+            group_data = pd.concat([group_data_original, old_group_data]).drop_duplicates(subset='fault_address', keep='first')
 
             smallest_page = group_data['fault_address'].min() // 4096
             largest_page = group_data['fault_address'].max() // 4096
-            density2 = (largest_page - smallest_page) / allocation_length
+            allocation_length = headers[allocation] // 4096
+
+            page_range = largest_page - smallest_page + 1
+
+            density1 = len(group_data) / page_range
+            density1_values.append(density1)
+
+            density2 = (page_range) / allocation_length
             density2_values.append(density2)
 
             batch_groups.append(batch_group)
@@ -312,15 +318,17 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timese
         ax2.scatter(batch_groups, density2_values, marker=current_marker, color=current_color,
                     label=hex(allocation))
 
+        ax1.axhline(np.mean(density1_values), color=current_color, linestyle='-', label=f"Mean {hex(allocation)}")
+        ax1.axhline(np.median(density1_values), color=current_color, linestyle='--',
+                    label=f"Median {hex(allocation)}")
+
+        ax2.axhline(np.mean(density2_values), color=current_color, linestyle='-', label=f"Mean {hex(allocation)}")
+        ax2.axhline(np.median(density2_values), color=current_color, linestyle='--',
+                    label=f"Median {hex(allocation)}")
+
     # Statistics for Density1 and Density2
     for ax, density_values, density_name in [(ax1, density1_values, "Density1"),
                                              (ax2, density2_values, "Density2")]:
-        ax.axhline(np.mean(density_values), color='r', linestyle='-', label=f'Mean {density_name}')
-        ax.axhline(np.median(density_values), color='g', linestyle='--', label=f'Median {density_name}')
-        ax.axhline(np.mean(density_values) + np.std(density_values), color='b', linestyle='-.',
-                   label=f'1 Std Dev {density_name}')
-        ax.axhline(np.mean(density_values) - np.std(density_values), color='b', linestyle='-.')
-
         ax.set_title(f'Time vs. {density_name}')
         ax.set_xlabel('Time (Batch Group)')
         ax.set_ylabel(density_name)
@@ -339,7 +347,7 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timese
     allocations = batches_df['allocation'].unique()
 
     # List of distinct colors and markers
-    colors = plt.cm.tab20.colors
+    colors = plt.cm.Dark2.colors
     markers = ['o', 's', '^', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
 
     batchcap = batchcap // 2
@@ -363,21 +371,24 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timese
         density2_values = []
 
         batch_group_keys = list(grouped_data.groups.keys())
-        num_batch_groups = sum(1 for key in batch_group_keys if key[0] == allocation)
 
         old_group_data = pd.DataFrame()
         for group_idx, ((alloc, batch_group), group_data_original) in enumerate(grouped_data):
             if alloc != allocation:
                 continue
-            group_data = pd.concat([group_data_original, old_group_data])
-            num_instances = len(group_data)
-            allocation_length = headers[allocation] // 4096
-            density1 = num_instances / allocation_length
-            density1_values.append(density1)
+
+            group_data = pd.concat([group_data_original, old_group_data]).drop_duplicates(subset='fault_address', keep='first')
 
             smallest_page = group_data['fault_address'].min() // 4096
             largest_page = group_data['fault_address'].max() // 4096
-            density2 = (largest_page - smallest_page) / allocation_length
+            allocation_length = headers[allocation] // 4096
+
+            page_range = largest_page - smallest_page + 1
+
+            density1 = len(group_data) / page_range
+            density1_values.append(density1)
+
+            density2 = (page_range) / allocation_length
             density2_values.append(density2)
 
             batch_groups.append(batch_group)
@@ -388,8 +399,8 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timese
         current_marker = markers[idx]
 
         # Moving averages
-        ma_density1 = pd.Series(density1_values).rolling(window=3).mean().tolist()
-        ma_density2 = pd.Series(density2_values).rolling(window=3).mean().tolist()
+        ma_density1 = pd.Series(density1_values).rolling(window=100).mean().tolist()
+        ma_density2 = pd.Series(density2_values).rolling(window=100).mean().tolist()
 
         # Plotting density1 and density2
         ax1.scatter(batch_groups, density1_values, marker=current_marker, color=current_color,
@@ -402,13 +413,6 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timese
         ax2.plot(batch_groups, ma_density2, color=current_color, linestyle='-.', alpha=0.5,
                  label=f"Moving Avg {hex(allocation)}")
 
-        ax1.axhline(np.mean(density1_values), color=current_color, linestyle='-', label=f"Mean {hex(allocation)}")
-        ax1.axhline(np.median(density1_values), color=current_color, linestyle='--',
-                    label=f"Median {hex(allocation)}")
-
-        ax2.axhline(np.mean(density2_values), color=current_color, linestyle='-', label=f"Mean {hex(allocation)}")
-        ax2.axhline(np.median(density2_values), color=current_color, linestyle='--',
-                    label=f"Median {hex(allocation)}")
 
     for ax, density_name in [(ax1, "Density1"), (ax2, "Density2")]:
         ax.set_title(f'Time vs. {density_name}')
@@ -419,6 +423,94 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timese
     # Cleanup and final touches
     del batches_df['first_batch_id']
     del batches_df['batch_group']
+
+    plt.tight_layout()
+    plt.savefig(output_file, format='pdf')
+    plt.close()
+
+
+def compute_duplication_ratio(group_data, method):
+    # Ensure 'num_instances' is treated as an integer
+    group_data['num_instances'] = group_data['num_instances'].astype(int)
+
+    if method == 'inter':
+        # For each unique fault address, count how many times it appears
+        value_counts = group_data['fault_address'].value_counts().sum()
+        # Divide each count by the total number of unique fault addresses
+        duplication_ratios = value_counts / group_data['fault_address'].nunique()
+        return duplication_ratios
+        # Return the sum of these duplication ratios
+        #return duplication_ratios.sum()
+    elif method == 'intra':
+        density_value = group_data.drop_duplicates(subset='fault_address', keep='first')['num_instances'].sum()
+        return density_value / group_data['fault_address'].nunique()
+    elif method == 'all':
+        density_value = group_data['num_instances'].sum()
+        return density_value / group_data['fault_address'].nunique()
+    else:
+        raise ValueError("Invalid method provided.")
+
+
+def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg(batches_df, headers, output_file, batchcap):
+    allocations = batches_df['allocation'].unique()
+    colors = plt.cm.Dark2.colors
+    markers = ['o', 's', '^', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
+
+    batchcap = batchcap // 2
+    batches_df['first_batch_id'] = batches_df.groupby('allocation')['batch_id'].transform('min')
+    batches_df['batch_group'] = (batches_df['batch_id'] - batches_df['first_batch_id']) // batchcap
+    grouped_data = batches_df.groupby(['allocation', 'batch_group'])
+
+    fig, axs = plt.subplots(2, 3, figsize=(18, 8))
+
+    methods = ['inter', 'intra', 'all']
+    for idx, allocation in enumerate(allocations):
+        print(f"Processing allocation: {hex(allocation)} with batchcap: {batchcap}...")
+
+        for method_idx, method in enumerate(methods):
+            batch_groups = []
+            raw_count_values = []
+            duplication_ratio_values = []
+
+            old_group_data = pd.DataFrame()
+            for group_idx, ((alloc, batch_group), group_data_original) in enumerate(grouped_data):
+                if alloc != allocation:
+                    continue
+
+                group_data = pd.concat([group_data_original, old_group_data])
+
+                raw_count = compute_duplication_ratio(group_data, method)
+                unique_addresses_count = group_data['fault_address'].nunique()
+                duplication_ratio = raw_count / unique_addresses_count
+
+                batch_groups.append(batch_group)
+                raw_count_values.append(raw_count)
+                duplication_ratio_values.append(duplication_ratio)
+
+                old_group_data = group_data_original
+
+            current_color = colors[idx % len(colors)]
+            current_marker = markers[idx % len(markers)]
+
+            # Plotting raw counts and duplication ratio
+            axs[0, method_idx].scatter(batch_groups, raw_count_values, marker=current_marker, color=current_color, label=f"{method} {hex(allocation)}")
+            axs[1, method_idx].scatter(batch_groups, duplication_ratio_values, marker=current_marker, color=current_color, label=f"{method} {hex(allocation)}")
+
+            ma_raw = pd.Series(raw_count_values).rolling(window=100).mean().tolist()
+            ma_duplication_ratio = pd.Series(duplication_ratio_values).rolling(window=100).mean().tolist()
+
+            axs[0, method_idx].plot(batch_groups, ma_raw, color=current_color, linestyle='-.', alpha=0.5)
+            axs[1, method_idx].plot(batch_groups, ma_duplication_ratio, color=current_color, linestyle='-.', alpha=0.5)
+
+    for i, method in enumerate(methods):
+        axs[0, i].set_title(f'{method} Time vs. Raw Counts')
+        axs[1, i].set_title(f'{method} Time vs. Duplication Ratio')
+        axs[0, i].set_xlabel('Time (Batch Group)')
+        axs[0, i].set_ylabel('Raw Counts')
+        axs[1, i].set_xlabel('Time (Batch Group)')
+        axs[1, i].set_ylabel('Duplication Ratio')
+        axs[0, i].legend()
+        axs[1, i].legend()
 
     plt.tight_layout()
     plt.savefig(output_file, format='pdf')
@@ -497,48 +589,76 @@ def print_allocation_counts(df):
         count = len(df[df['allocation'] == allocation])
         print(f"Allocation: {allocation}, Number of matching rows: {count}")
 
+
+
+
 def main(args):
     output_dir = "../../figures/density/"
     os.makedirs(output_dir, exist_ok=True)
-    # Number of processes you want to spawn. Typically, this is the number of CPU cores.
-    num_processes = os.cpu_count() - 1
+    num_processes = cpu_count() - 1
 
+    tasks = []
     with Pool(num_processes) as pool:
-        pool.map(process_file, args.files)
+        results = pool.map(parse_and_construct_df, args.files)
+        for batches_df, headers, file in results:
+            for batchcap in [20, 50, 100, 200]:
+                tasks.append((scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg,
+                             batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-duplicates-rolling-timeseries-movingavg-{batchcap}",
+                             "allocation-continuous-batchcap-duplicates-rolling-timeseries-movingavg"), batchcap))
+                # tasks.extend([
+                #     (scatter_plot_by_allocation_batchcap_application, batches_df, headers,
+                #      get_output_file_name(file, f"global-batchcap-{batchcap}", "global-batchcap"), batchcap),
+                #     (scatter_plot_by_allocation_batchcap_by_allocation, batches_df, headers,
+                #      get_output_file_name(file, f"allocation-batchcap-{batchcap}", "allocation-batchcap"), batchcap),
+                #     (scatter_plot_by_allocation_batchcap_progression_by_allocation, batches_df, headers,
+                #      get_output_file_name(file, f"allocation-batchcap-progression-{batchcap}",
+                #                           "allocation-continuous-batchcap"), batchcap),
+                #     (scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling, batches_df, headers,
+                #      get_output_file_name(file, f"allocation-batchcap-progression-rolling-{batchcap}",
+                #                           "allocation-continuous-batchcap-rolling"), batchcap),
+                #     (scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timeseries, batches_df, headers,
+                #      get_output_file_name(file, f"allocation-batchcap-progression-rolling-timeseries-{batchcap}",
+                #                           "allocation-continuous-batchcap-rolling-timeseries"), batchcap),
+                #     (scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timeseries_movingavg, batches_df,
+                #      headers,
+                #      get_output_file_name(file, f"allocation-batchcap-progression-rolling-timeseries-movingavg-{batchcap}",
+                #                           "allocation-continuous-batchcap-rolling-timeseries-movingavg"), batchcap)
+                # ])
 
-def process_file(file):
+            #for timelimit in [int(1e5), int(1e6), int(1e7), int(1e8)]:
+                #tasks.append((scatter_plot_by_allocation_time, batches_df, headers,
+                #              get_output_file_name(file, f"global-timelimit-{timelimit}", "timelimit"), timelimit))
+
+    print(tasks)
+    print(f"Creating pool with {num_processes} processors for {len(tasks)} tasks:")
+    with Pool(num_processes) as pool:
+        pool.starmap(execute_task, tasks)
+
+
+def parse_and_construct_df(file):
     print(f"Parsing file: {file}")
-    headers, batches = parse_file(file)
-
+    headers, batches = parse_file(file)  # Make sure parse_file is defined elsewhere in your code
     batch_cols = [
-        "fault_address", "timestamp", "fault_type", "fault_access_type", "access_type_mask", "num_instances",
-        "client_type", "mmu_engine_type",
-        "client_id", "mmu_engine_id",
-        "utlb_id", "gpc_id", "channel_id",
+        "fault_address", "timestamp", "fault_type", "fault_access_type",
+        "access_type_mask", "num_instances", "client_type", "mmu_engine_type",
+        "client_id", "mmu_engine_id", "utlb_id", "gpc_id", "channel_id",
         "ve_id", "batch_id", "allocation"
     ]
-    print("Creating data frame")
 
-    batches_df = pd.concat([pd.DataFrame(batch, columns=batch_cols, dtype=object) for batch in batches], ignore_index=True)
-    print_allocation_counts(batches_df)
+    batches_df = pd.concat([pd.DataFrame(batch, columns=batch_cols, dtype=object) for batch in batches],
+                           ignore_index=True)
+    print_allocation_counts(batches_df)  # Ensure that print_allocation_counts is defined elsewhere in your code
 
-    for batchcap in [20, 50, 100, 200]:
-        scatter_plot_by_allocation_batchcap_application(batches_df, headers, get_output_file_name(file, f"global-batchcap-{batchcap}", "global-batchcap"), batchcap)
-        scatter_plot_by_allocation_batchcap_by_allocation(batches_df, headers, get_output_file_name(file, f"allocation-batchcap-{batchcap}", "allocation-batchcap"), batchcap)
-        scatter_plot_by_allocation_batchcap_progression_by_allocation(batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-{batchcap}", "allocation-continuous-batchcap"), batchcap)
-        scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling(batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-rolling-{batchcap}", "allocation-continuous-batchcap-rolling"), batchcap)
-        scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timeseries(batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-rolling-timeseries-{batchcap}", "allocation-continuous-batchcap-rolling-timeseries"), batchcap)
-        scatter_plot_by_allocation_batchcap_progression_by_allocation_rolling_timeseries_movingavg(batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-rolling-timeseries-movingavg-{batchcap}", "allocation-continuous-batchcap-rolling-timeseries-movingavg"), batchcap)
+    return (batches_df, headers, file)
 
-    for timelimit in [int(1e5), int(1e6), int(1e7), int(1e8)]:
-        scatter_plot_by_allocation_time(batches_df, headers, get_output_file_name(file, f"global-timelimit-{timelimit}", "timelimit"), timelimit)
 
+def execute_task(func, batches_df, headers, output_name, limit):
+    func(batches_df, headers, output_name, limit)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse text files containing memory access traces.')
     parser.add_argument('files', metavar='F', type=str, nargs='+',
                         help='The text files to be parsed.')
-
     args = parser.parse_args()
     main(args)
