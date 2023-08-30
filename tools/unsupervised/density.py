@@ -433,25 +433,36 @@ def compute_duplication_ratio(group_data, method):
     # Ensure 'num_instances' is treated as an integer
     group_data['num_instances'] = group_data['num_instances'].astype(int)
 
-    if method == 'inter':
-        # For each unique fault address, count how many times it appears
-        value_counts = group_data['fault_address'].value_counts().sum()
-        # Divide each count by the total number of unique fault addresses
-        duplication_ratios = value_counts / group_data['fault_address'].nunique()
-        return duplication_ratios
-        # Return the sum of these duplication ratios
-        #return duplication_ratios.sum()
+    unique_fault_addresses = group_data['fault_address'].nunique()
+
+    if method == 'unique_addresses':
+        return unique_fault_addresses
+
+    elif method == 'inter':
+        fault_counts = group_data['fault_address'].value_counts()
+        duplicates = fault_counts.sum() - 1
+        return duplicates / unique_fault_addresses
+
     elif method == 'intra':
-        density_value = group_data.drop_duplicates(subset='fault_address', keep='first')['num_instances'].sum()
-        return density_value / group_data['fault_address'].nunique()
+        # all faults
+        total_instances = group_data['num_instances'].sum()
+        # inter
+        fault_counts = group_data['fault_address'].value_counts()
+        inter_duplicates = fault_counts.sum() - 1
+        # all - inter
+        return (total_instances - inter_duplicates) / unique_fault_addresses
+
     elif method == 'all':
-        density_value = group_data['num_instances'].sum()
-        return density_value / group_data['fault_address'].nunique()
+        total_instances = group_data['num_instances'].sum() - 1
+        return (total_instances - unique_fault_addresses) / unique_fault_addresses
+
     else:
         raise ValueError("Invalid method provided.")
 
-
-def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg(batches_df, headers, output_file, batchcap):
+def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg(batches_df,
+                                                                                                            headers,
+                                                                                                            output_file,
+                                                                                                            batchcap):
     allocations = batches_df['allocation'].unique()
     colors = plt.cm.Dark2.colors
     markers = ['o', 's', '^', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
@@ -461,16 +472,15 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rol
     batches_df['batch_group'] = (batches_df['batch_id'] - batches_df['first_batch_id']) // batchcap
     grouped_data = batches_df.groupby(['allocation', 'batch_group'])
 
-    fig, axs = plt.subplots(2, 3, figsize=(18, 8))
+    fig, axs = plt.subplots(2, 2, figsize=(12, 8))
 
-    methods = ['inter', 'intra', 'all']
+    methods = ['unique_addresses', 'inter', 'intra', 'all']
     for idx, allocation in enumerate(allocations):
         print(f"Processing allocation: {hex(allocation)} with batchcap: {batchcap}...")
 
         for method_idx, method in enumerate(methods):
             batch_groups = []
-            raw_count_values = []
-            duplication_ratio_values = []
+            duplication_ratios = []
 
             old_group_data = pd.DataFrame()
             for group_idx, ((alloc, batch_group), group_data_original) in enumerate(grouped_data):
@@ -479,38 +489,31 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rol
 
                 group_data = pd.concat([group_data_original, old_group_data])
 
-                raw_count = compute_duplication_ratio(group_data, method)
-                unique_addresses_count = group_data['fault_address'].nunique()
-                duplication_ratio = raw_count / unique_addresses_count
+                duplication_ratio = compute_duplication_ratio(group_data, method)
 
                 batch_groups.append(batch_group)
-                raw_count_values.append(raw_count)
-                duplication_ratio_values.append(duplication_ratio)
+                duplication_ratios.append(duplication_ratio)
 
                 old_group_data = group_data_original
 
             current_color = colors[idx % len(colors)]
             current_marker = markers[idx % len(markers)]
 
-            # Plotting raw counts and duplication ratio
-            axs[0, method_idx].scatter(batch_groups, raw_count_values, marker=current_marker, color=current_color, label=f"{method} {hex(allocation)}")
-            axs[1, method_idx].scatter(batch_groups, duplication_ratio_values, marker=current_marker, color=current_color, label=f"{method} {hex(allocation)}")
+            axs[method_idx // 2, method_idx % 2].scatter(batch_groups, duplication_ratios, marker=current_marker,
+                                                         color=current_color,
+                                                         label=f"{method} {hex(allocation)}")
 
-            ma_raw = pd.Series(raw_count_values).rolling(window=100).mean().tolist()
-            ma_duplication_ratio = pd.Series(duplication_ratio_values).rolling(window=100).mean().tolist()
+            ma_ratio = pd.Series(duplication_ratios).rolling(window=100).mean().tolist()
+            axs[method_idx // 2, method_idx % 2].plot(batch_groups, ma_ratio, color=current_color, linestyle='-.',
+                                                      alpha=0.5)
 
-            axs[0, method_idx].plot(batch_groups, ma_raw, color=current_color, linestyle='-.', alpha=0.5)
-            axs[1, method_idx].plot(batch_groups, ma_duplication_ratio, color=current_color, linestyle='-.', alpha=0.5)
-
-    for i, method in enumerate(methods):
-        axs[0, i].set_title(f'{method} Time vs. Raw Counts')
-        axs[1, i].set_title(f'{method} Time vs. Duplication Ratio')
-        axs[0, i].set_xlabel('Time (Batch Group)')
-        axs[0, i].set_ylabel('Raw Counts')
-        axs[1, i].set_xlabel('Time (Batch Group)')
-        axs[1, i].set_ylabel('Duplication Ratio')
-        axs[0, i].legend()
-        axs[1, i].legend()
+    titles = ['Unique Addresses', 'Inter-SM Duplication Ratio', 'Intra-SM Duplication Ratio',
+              'Overall Duplication Ratio']
+    for i, title in enumerate(titles):
+        axs[i // 2, i % 2].set_title(title)
+        axs[i // 2, i % 2].set_xlabel('Time (Batch Group)')
+        axs[i // 2, i % 2].set_ylabel('Value')
+        axs[i // 2, i % 2].legend()
 
     plt.tight_layout()
     plt.savefig(output_file, format='pdf')
