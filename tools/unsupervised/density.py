@@ -440,21 +440,21 @@ def compute_duplication_ratio(group_data, method):
 
     elif method == 'inter':
         fault_counts = group_data['fault_address'].value_counts()
-        duplicates = fault_counts.sum() - 1
-        return duplicates / unique_fault_addresses
+        duplicates = fault_counts.sum()
+        return (duplicates) / unique_fault_addresses
 
     elif method == 'intra':
         # all faults
         total_instances = group_data['num_instances'].sum()
         # inter
         fault_counts = group_data['fault_address'].value_counts()
-        inter_duplicates = fault_counts.sum() - 1
+        inter_duplicates = fault_counts.sum()
         # all - inter
-        return (total_instances - inter_duplicates) / unique_fault_addresses
+        return (total_instances - inter_duplicates + 1) / unique_fault_addresses
 
     elif method == 'all':
-        total_instances = group_data['num_instances'].sum() - 1
-        return (total_instances - unique_fault_addresses) / unique_fault_addresses
+        total_instances = group_data['num_instances'].sum()
+        return (total_instances - unique_fault_addresses + 1) / unique_fault_addresses
 
     else:
         raise ValueError("Invalid method provided.")
@@ -514,6 +514,52 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rol
         axs[i // 2, i % 2].set_xlabel('Time (Batch Group)')
         axs[i // 2, i % 2].set_ylabel('Value')
         axs[i // 2, i % 2].legend()
+
+    plt.tight_layout()
+    plt.savefig(output_file, format='pdf')
+    plt.close()
+
+
+def scatter_plot_by_time_interval(batches_df, headers, output_file, time_interval):
+    allocations = batches_df['allocation'].unique()
+    colors = plt.cm.Dark2.colors
+    markers = ['o', 's', '^', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
+
+    # Convert the timestamp to float and then create a time group based on the time_interval
+    batches_df['timestamp'] = batches_df['timestamp'].astype(float) - batches_df['timestamp'].min()
+    batches_df['time_group'] = (batches_df['timestamp'] / time_interval).apply(np.floor).astype(int)
+
+    grouped_data = batches_df.groupby(['allocation', 'time_group'])
+
+    fig, axs = plt.subplots(1, 3, figsize=(18, 8))
+    methods = ['inter', 'intra', 'all']
+
+    for idx, allocation in enumerate(allocations):
+        for method_idx, method in enumerate(methods):
+            time_groups = []
+            density_values = []
+            unique_addresses = []
+
+            for (alloc, time_group), group_data in grouped_data:
+                if alloc != allocation:
+                    continue
+
+                density_value = compute_duplication_ratio(group_data, method)
+
+                time_groups.append(time_group)
+                density_values.append(density_value)
+                unique_addresses.append(group_data['fault_address'].nunique())
+
+            current_color = colors[idx % len(colors)]
+            current_marker = markers[idx % len(markers)]
+
+            axs[method_idx].scatter(time_groups, density_values, marker=current_marker, color=current_color,
+                                    label=f"{method} {hex(alloc)}")
+
+            axs[method_idx].set_title(f'{method} Time vs. Duplication Ratio')
+            axs[method_idx].set_xlabel('Time Group')
+            axs[method_idx].set_ylabel('Duplication Ratio')
+            axs[method_idx].legend()
 
     plt.tight_layout()
     plt.savefig(output_file, format='pdf')
@@ -628,9 +674,9 @@ def main(args):
                 #                           "allocation-continuous-batchcap-rolling-timeseries-movingavg"), batchcap)
                 # ])
 
-            #for timelimit in [int(1e5), int(1e6), int(1e7), int(1e8)]:
-                #tasks.append((scatter_plot_by_allocation_time, batches_df, headers,
-                #              get_output_file_name(file, f"global-timelimit-{timelimit}", "timelimit"), timelimit))
+            for timelimit in [int(1e6), int(1e7), int(1e8), int(1e9)]:
+                tasks.append((scatter_plot_by_time_interval, batches_df, headers,
+                              get_output_file_name(file, f"global-timeinterval-{timelimit:.1e}", "timeinterval"), timelimit))
 
     print(tasks)
     print(f"Creating pool with {num_processes} processors for {len(tasks)} tasks:")
@@ -658,10 +704,26 @@ def parse_and_construct_df(file):
 def execute_task(func, batches_df, headers, output_name, limit):
     func(batches_df, headers, output_name, limit)
 
+from datetime import datetime
+import pytz
+
+def get_time_str():
+    # Define the timezone for EST
+    est = pytz.timezone('US/Eastern')
+
+    # Get the current UTC time and localize it to EST
+    utc_now = datetime.now(pytz.utc)
+    est_now = utc_now.astimezone(est)
+
+    # Print the current time in EST
+    return est_now.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse text files containing memory access traces.')
     parser.add_argument('files', metavar='F', type=str, nargs='+',
                         help='The text files to be parsed.')
     args = parser.parse_args()
+    print(f"starting at {get_time_str()}")
     main(args)
+    print(f"finishing at {get_time_str()}")
