@@ -520,6 +520,62 @@ def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rol
     plt.close()
 
 
+def scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg_individual(
+        batches_df, headers, output_file, batchcap):
+    allocations = batches_df['allocation'].unique()
+    colors = plt.cm.Dark2.colors
+    markers = ['o', 's', '^', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
+
+    batchcap = batchcap // 2
+    batches_df['first_batch_id'] = batches_df.groupby('allocation')['batch_id'].transform('min')
+    batches_df['batch_group'] = (batches_df['batch_id'] - batches_df['first_batch_id']) // batchcap
+    grouped_data = batches_df.groupby(['allocation', 'batch_group'])
+
+    methods = ['unique_addresses', 'inter', 'intra', 'all']
+    titles = ['Unique Addresses', 'Inter-SM Duplication Ratio', 'Intra-SM Duplication Ratio',
+              'Overall Duplication Ratio']
+
+    for method_idx, method in enumerate(methods):
+        fig, ax = plt.subplots(figsize=(6, 4))
+
+        for idx, allocation in enumerate(allocations):
+            print(f"Processing allocation: {hex(allocation)} with batchcap: {batchcap}...")
+            batch_groups = []
+            duplication_ratios = []
+
+            old_group_data = pd.DataFrame()
+            for group_idx, ((alloc, batch_group), group_data_original) in enumerate(grouped_data):
+                if alloc != allocation:
+                    continue
+
+                group_data = pd.concat([group_data_original, old_group_data])
+
+                duplication_ratio = compute_duplication_ratio(group_data, method)
+
+                batch_groups.append(batch_group)
+                duplication_ratios.append(duplication_ratio)
+
+                old_group_data = group_data_original
+
+            current_color = colors[idx % len(colors)]
+            current_marker = markers[idx % len(markers)]
+
+            ax.scatter(batch_groups, duplication_ratios, marker=current_marker, color=current_color,
+                       label=f"{method} {hex(allocation)}")
+
+            ma_ratio = pd.Series(duplication_ratios).rolling(window=100).mean().tolist()
+            ax.plot(batch_groups, ma_ratio, color=current_color, linestyle='-.', alpha=0.5)
+
+        ax.set_title(titles[method_idx])
+        ax.set_xlabel('Time (Batch Group)')
+        ax.set_ylabel('Value')
+        ax.legend()
+
+        plt.tight_layout()
+        plt.savefig(f"{output_file}_{method}.pdf", format='pdf')
+        plt.close()
+
+
 def scatter_plot_by_time_interval(batches_df, headers, output_file, time_interval):
     allocations = batches_df['allocation'].unique()
     colors = plt.cm.Dark2.colors
@@ -651,9 +707,13 @@ def main(args):
         results = pool.map(parse_and_construct_df, args.files)
         for batches_df, headers, file in results:
             for batchcap in [20, 50, 100, 200]:
-                tasks.append((scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg,
-                             batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-duplicates-rolling-timeseries-movingavg-{batchcap}",
-                             "allocation-continuous-batchcap-duplicates-rolling-timeseries-movingavg"), batchcap))
+
+                tasks.append((scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg_individual,
+                              batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-duplicates-rolling-timeseries-movingavg-{batchcap}-individual",
+                                                                        "allocation-continuous-batchcap-duplicates-rolling-timeseries-movingavg-individual"), batchcap))
+                #tasks.append((scatter_plot_by_allocation_batchcap_progression_by_allocation_duplicates_rolling_timeseries_movingavg,
+                #             batches_df, headers, get_output_file_name(file, f"allocation-batchcap-progression-duplicates-rolling-timeseries-movingavg-{batchcap}",
+                #             "allocation-continuous-batchcap-duplicates-rolling-timeseries-movingavg"), batchcap))
                 # tasks.extend([
                 #     (scatter_plot_by_allocation_batchcap_application, batches_df, headers,
                 #      get_output_file_name(file, f"global-batchcap-{batchcap}", "global-batchcap"), batchcap),
